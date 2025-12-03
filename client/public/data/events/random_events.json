@@ -1,0 +1,385 @@
+[
+  {
+    "id": "event_dropped_pencil",
+    "title": "A Helping Moment",
+    "type": "random",
+    "trigger": {
+      "scenes": ["hallway_morning", "hallway_afternoon", "classroom_5a"],
+      "probability": 0.15
+    },
+    "description": "Someone drops their pencil case nearby. The contents scatter across the floor.",
+    "choices": [
+      {
+        "id": "help_pick_up",
+        "text": "Help pick up the scattered supplies",
+        "effects": {
+          "stats": { "empathy": 1, "reputation": 1 },
+          "relationship": { "random_classmate": 2 }
+        },
+        "followUp": "You quickly help gather the scattered pencils and erasers. The classmate smiles gratefully."
+      },
+      {
+        "id": "walk_past",
+        "text": "Keep walking",
+        "effects": {},
+        "followUp": "You continue on your way. Someone else stops to help."
+      }
+    ]
+  },
+  {
+    "id": "event_lunch_seat",
+    "title": "The Empty Seat",
+    "type": "random",
+    "trigger": {
+      "scenes": ["cafeteria"],
+      "probability": 0.2
+    },
+    "description": "You notice someone sitting alone at a table, looking a bit lonely.",
+    "choices": [
+      {
+        "id": "sit_with_them",
+        "text": "Go sit with them",
+        "effects": {
+          "stats": { "empathy": 2 },
+          "relationship": { "jordan": 3 }
+        },
+        "followUp": "You join them and have a nice conversation. They seem happy for the company."
+      },
+      {
+        "id": "sit_elsewhere",
+        "text": "Sit with your usual friends",
+        "effects": {},
+        "followUp": "You head to your regular spot. The person eventually leaves."
+      }
+    ]
+  },
+  {
+    "id": "event_playground_conflict",
+    "title": "Playground Dispute",
+    "type": "random",
+    "trigger": {
+      "scenes": ["playground"],
+      "probability": 0.18
+    },
+    "description": "Two younger kids are arguing over whose turn it is on the swings.",
+    "choices": [
+      {
+        "id": "help_mediate",
+        "text": "Help them work it out fairly",
+        "effects": {
+          "stats": { "empathy": 2, "reputation": 2 },
+          "relationship": {}
+        },
+        "followUp": "You suggest they take turns with a timer. Both kids agree and thank you."
+      },
+      {
+        "id": "get_adult",
+        "text": "Find an adult to help",
+        "effects": {
+          "stats": { "reputation": 1 },
+          "relationship": { "coach_martinez": 1 }
+        },
+        "followUp": "You find Coach Martinez who handles the situation."
+      },
+      {
+        "id": "ignore",
+        "text": "Let them work it out themselves",
+        "effects": {},
+        "followUp": "You walk away. Eventually a teacher comes over."
+      }
+    ]
+  },
+  {
+    "id": "event_library_noise",
+    "title": "Library Disruption",
+    "type": "random",
+    "trigger": {
+      "scenes": ["library"],
+      "probability": 0.12
+    },
+    "description": "Some students are being noisy in the library, disturbing others trying to study.",
+    "choices": [
+      {
+        "id": "politely_ask",
+        "text": "Politely ask them to be quieter",
+        "effects": {
+          "stats": { "confidence": 1 },
+          "relationship": {}
+        },
+        "followUp": "They apologize and lower their voices. Mr. Chen gives you an approving nod."
+      },
+      {
+        "id": "tell_librarian",
+        "text": "Let Mr. Chen know",
+        "effects": {
+          "stats": {},
+          "relationship": { "mr_chen": 1 }
+        },
+        "followUp": "Mr. Chen quietly reminds them of library rules."
+      },
+      {
+        "id": "move_seats",
+        "text": "Move to a quieter spot",
+        "effects": {},
+        "followUp": "You find a peaceful corner to continue studying."
+      }
+    ]
+  },
+  {
+    "id": "event_found_item",
+    "title": "Lost and Found",
+    "type": "random",
+    "trigger": {
+      "scenes": ["hallway_morning", "hallway_afternoon", "playground"],
+      "probability": 0.1
+    },
+    "description": "You find a nice-looking jacket left on a bench.",
+    "choices": [
+      {
+        "id": "take_to_office",
+        "text": "Take it to the lost and found",
+        "effects": {
+          "stats": { "empathy": 1, "reputation": 1 },
+          "relationship": {}
+        },
+        "followUp": "You bring it to the office. The secretary thanks you for being responsible."
+      },
+      {
+        "id": "leave_it",
+        "text": "Leave it there",
+        "effects": {},
+        "followUp": "You leave it, hoping the owner will come back for it."
+      }
+    ]
+  },
+  {
+    "id": "event_homework_help",
+    "title": "Homework Struggle",
+    "type": "random",
+    "trigger": {
+      "scenes": ["classroom_5a", "library"],
+      "probability": 0.15
+    },
+    "description": "A classmate is struggling with their homework and looks frustrated.",
+    "choices": [
+      {
+        "id": "offer_help",
+        "text": "Offer to help explain",
+        "effects": {
+          "stats": { "empathy": 2, "confidence": 1 },
+          "relationship": { "sam": 2 }
+        },
+        "followUp": "You help them understand the problem. They're grateful for your patience."
+      },
+      {
+        "id": "suggest_teacher",
+        "text": "Suggest they ask the teacher",
+        "effects": {
+          "stats": {},
+          "relationship": {}
+        },
+        "followUp": "They nod and raise their hand for teacher help."
+      }
+    ]
+  },
+  {
+    "id": "event_bryce_moment",
+    "title": "Unexpected Side",
+    "type": "conditional",
+    "trigger": {
+      "scenes": ["cafeteria", "playground"],
+      "probability": 0.1,
+      "conditions": [
+        { "type": "questComplete", "questId": "main_bully_encounter" }
+      ]
+    },
+    "description": "You notice Bryce sitting alone, looking down at his lunch. He seems troubled.",
+    "choices": [
+      {
+        "id": "check_on_him",
+        "text": "Ask if he's okay",
+        "effects": {
+          "stats": { "empathy": 3, "confidence": 2 },
+          "relationship": { "bryce": 8 }
+        },
+        "followUp": "Bryce looks surprised but opens up a little. Maybe there's more to him than you thought."
+      },
+      {
+        "id": "observe_only",
+        "text": "Just observe for now",
+        "effects": {
+          "stats": { "empathy": 1 },
+          "relationship": {}
+        },
+        "followUp": "You watch from a distance, noticing he seems lonely."
+      },
+      {
+        "id": "walk_away",
+        "text": "It's not your concern",
+        "effects": {},
+        "followUp": "You move on with your day."
+      }
+    ]
+  },
+  {
+    "id": "event_parent_call",
+    "title": "Phone Call Home",
+    "type": "random",
+    "trigger": {
+      "scenes": ["home_evening"],
+      "probability": 0.2
+    },
+    "description": "Mom tells you Grandma is on the phone and wants to hear about school.",
+    "choices": [
+      {
+        "id": "chat_happily",
+        "text": "Tell her about your day",
+        "effects": {
+          "stats": { "stress": -2 },
+          "relationship": { "mom": 1 }
+        },
+        "followUp": "You share stories with Grandma. Her warm voice makes you feel better."
+      },
+      {
+        "id": "keep_short",
+        "text": "Keep it brief",
+        "effects": {},
+        "followUp": "You say hi and pass the phone back to Mom."
+      }
+    ]
+  },
+  {
+    "id": "event_store_encounter",
+    "title": "Neighborhood Chat",
+    "type": "random",
+    "trigger": {
+      "scenes": ["convenience_store"],
+      "probability": 0.25
+    },
+    "description": "Mr. Park notices you and asks how school is going.",
+    "choices": [
+      {
+        "id": "share_honestly",
+        "text": "Share what's been happening",
+        "effects": {
+          "stats": { "stress": -2 },
+          "relationship": { "shop_owner": 3 }
+        },
+        "followUp": "Mr. Park listens kindly and offers some wisdom about friendship."
+      },
+      {
+        "id": "say_fine",
+        "text": "Just say everything's fine",
+        "effects": {},
+        "followUp": "He nods and wishes you a good day."
+      }
+    ]
+  },
+  {
+    "id": "event_teacher_notice",
+    "title": "Teacher's Observation",
+    "type": "conditional",
+    "trigger": {
+      "scenes": ["classroom_5a"],
+      "probability": 0.15,
+      "conditions": [
+        { "type": "stat", "stat": "stress", "op": ">=", "value": 30 }
+      ]
+    },
+    "description": "Ms. Carter notices you seem distracted and asks you to stay after class for a moment.",
+    "choices": [
+      {
+        "id": "open_up",
+        "text": "Tell her what's bothering you",
+        "effects": {
+          "stats": { "stress": -10, "confidence": 2 },
+          "relationship": { "ms_carter": 5 }
+        },
+        "followUp": "Ms. Carter listens carefully and offers to help. You feel less alone."
+      },
+      {
+        "id": "deflect",
+        "text": "Say you're just tired",
+        "effects": {
+          "stats": { "stress": -2 },
+          "relationship": {}
+        },
+        "followUp": "She nods but says her door is always open if you need to talk."
+      }
+    ]
+  },
+  {
+    "id": "event_alex_invitation",
+    "title": "Weekend Plans",
+    "type": "conditional",
+    "trigger": {
+      "scenes": ["classroom_5a", "cafeteria"],
+      "probability": 0.2,
+      "conditions": [
+        { "type": "relationship", "npcId": "alex", "stat": "friendship", "op": ">=", "value": 20 }
+      ]
+    },
+    "description": "Alex asks if you want to hang out at the park this weekend.",
+    "choices": [
+      {
+        "id": "accept",
+        "text": "Sounds great!",
+        "effects": {
+          "stats": { "stress": -3 },
+          "relationship": { "alex": 3 }
+        },
+        "followUp": "You make plans for Saturday afternoon. Something to look forward to!"
+      },
+      {
+        "id": "raincheck",
+        "text": "Maybe another time",
+        "effects": {
+          "relationship": { "alex": -1 }
+        },
+        "followUp": "Alex looks a bit disappointed but understands."
+      }
+    ]
+  },
+  {
+    "id": "event_courage_moment",
+    "title": "Standing Up",
+    "type": "conditional",
+    "trigger": {
+      "scenes": ["hallway_afternoon", "playground"],
+      "probability": 0.12,
+      "conditions": [
+        { "type": "stat", "stat": "confidence", "op": ">=", "value": 40 }
+      ]
+    },
+    "description": "You see Tyler teasing a younger student near the lockers.",
+    "choices": [
+      {
+        "id": "intervene",
+        "text": "Step in and ask Tyler to stop",
+        "effects": {
+          "stats": { "confidence": 3, "reputation": 3, "stress": 5 },
+          "relationship": { "tyler": -2 }
+        },
+        "followUp": "Tyler seems surprised and backs off. The younger student thanks you quietly."
+      },
+      {
+        "id": "get_help",
+        "text": "Quickly find a teacher",
+        "effects": {
+          "stats": { "reputation": 2 },
+          "relationship": { "ms_carter": 2 }
+        },
+        "followUp": "You find Ms. Carter who handles the situation."
+      },
+      {
+        "id": "comfort_after",
+        "text": "Wait and comfort the student after",
+        "effects": {
+          "stats": { "empathy": 2 },
+          "relationship": {}
+        },
+        "followUp": "After Tyler leaves, you check on the student and make sure they're okay."
+      }
+    ]
+  }
+]

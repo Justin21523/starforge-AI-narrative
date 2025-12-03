@@ -1,0 +1,716 @@
+[
+  {
+    "id": "main_intro_day1",
+    "title": "First Day Welcome",
+    "type": "main",
+    "steps": [
+      {
+        "id": "hallway_greeting",
+        "description": "Meet a classmate in the hallway before homeroom.",
+        "requiredConditions": [
+          { "type": "scene", "key": "hallway_morning", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_alex_intro"]
+      },
+      {
+        "id": "classroom_intro",
+        "description": "Introduce yourself in class and share one hobby.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_teacher_intro"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 2 },
+      "relationship": { "alex": 3, "ms_carter": 2 }
+    }
+  },
+  {
+    "id": "main_making_friends",
+    "title": "Making a True Friend",
+    "type": "main",
+    "steps": [
+      {
+        "id": "lunch_together",
+        "description": "Sit with Alex at lunch and learn about their interests.",
+        "requiredConditions": [
+          { "type": "scene", "key": "cafeteria", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_lunch_alex"]
+      },
+      {
+        "id": "visit_library",
+        "description": "Visit the library together to study.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_library_study"]
+      },
+      {
+        "id": "after_school",
+        "description": "Hang out at the park after school.",
+        "requiredConditions": [
+          { "type": "scene", "key": "park", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_park_hangout"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 3, "empathy": 2 },
+      "relationship": { "alex": 10 }
+    }
+  },
+  {
+    "id": "main_bully_encounter",
+    "title": "Standing Your Ground",
+    "type": "main",
+    "steps": [
+      {
+        "id": "first_encounter",
+        "description": "Encounter Bryce near the lockers.",
+        "requiredConditions": [
+          { "type": "scene", "key": "hallway_afternoon", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_bryce_confrontation"]
+      },
+      {
+        "id": "decide_response",
+        "description": "Decide how to respond to the teasing.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_choice_response"]
+      },
+      {
+        "id": "process_feelings",
+        "description": "Talk to someone about what happened.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_process"]
+      }
+    ],
+    "rewards": {
+      "stats": { "stress": -5, "confidence": 2 },
+      "relationship": {}
+    }
+  },
+  {
+    "id": "main_seeking_help",
+    "title": "Reaching Out",
+    "type": "main",
+    "steps": [
+      {
+        "id": "talk_to_parents",
+        "description": "Talk to Mom or Dad about school.",
+        "requiredConditions": [
+          { "type": "scene", "key": "home_evening", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_parents_talk"]
+      },
+      {
+        "id": "visit_counselor",
+        "description": "Visit Ms. Thompson in the counselor's office.",
+        "requiredConditions": [
+          { "type": "scene", "key": "counselor_office", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_counselor"]
+      }
+    ],
+    "rewards": {
+      "stats": { "stress": -10, "empathy": 3 },
+      "relationship": { "ms_thompson": 5 }
+    }
+  },
+  {
+    "id": "main_building_allies",
+    "title": "Stronger Together",
+    "type": "main",
+    "steps": [
+      {
+        "id": "meet_sam",
+        "description": "Get to know Sam in the library.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_meet_sam"]
+      },
+      {
+        "id": "form_group",
+        "description": "Form a study group with Alex and Sam.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_study_group"]
+      },
+      {
+        "id": "support_system",
+        "description": "Create a plan to support each other.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_support_plan"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 5, "reputation": 3 },
+      "relationship": { "alex": 5, "sam": 8 }
+    }
+  },
+  {
+    "id": "side_helping_hand",
+    "title": "Helping Hand",
+    "type": "side",
+    "steps": [
+      {
+        "id": "find_missing_book",
+        "description": "Help a classmate find a missing book near the lockers.",
+        "requiredConditions": [
+          { "type": "scene", "key": "hallway_afternoon", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_book_search"]
+      }
+    ],
+    "rewards": {
+      "stats": { "empathy": 1 },
+      "relationship": { "sam": 2 }
+    }
+  },
+  {
+    "id": "side_library_helper",
+    "title": "Library Assistant",
+    "type": "side",
+    "steps": [
+      {
+        "id": "help_mr_chen",
+        "description": "Help Mr. Chen organize returned books.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_library_help"]
+      }
+    ],
+    "rewards": {
+      "stats": { "empathy": 2, "reputation": 1 },
+      "relationship": { "mr_chen": 3 }
+    }
+  },
+  {
+    "id": "side_homework_buddy",
+    "title": "Homework Buddy",
+    "type": "side",
+    "steps": [
+      {
+        "id": "help_with_math",
+        "description": "Help a struggling classmate with math homework.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_math_help"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 1, "empathy": 2 },
+      "relationship": { "jordan": 3 }
+    }
+  },
+  {
+    "id": "side_playground_game",
+    "title": "Fair Play",
+    "type": "side",
+    "steps": [
+      {
+        "id": "organize_game",
+        "description": "Help organize a fair game at the playground.",
+        "requiredConditions": [
+          { "type": "scene", "key": "playground", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_playground_game"]
+      }
+    ],
+    "rewards": {
+      "stats": { "reputation": 2 },
+      "relationship": { "emma": 2 }
+    }
+  },
+  {
+    "id": "side_family_dinner",
+    "title": "Family Time",
+    "type": "side",
+    "steps": [
+      {
+        "id": "help_cooking",
+        "description": "Help prepare dinner with Mom.",
+        "requiredConditions": [
+          { "type": "scene", "key": "home_evening", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_cooking"]
+      },
+      {
+        "id": "share_day",
+        "description": "Share your day's experiences over dinner.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_dinner_talk"]
+      }
+    ],
+    "rewards": {
+      "stats": { "stress": -3 },
+      "relationship": { "mom": 2, "dad": 2 }
+    }
+  },
+  {
+    "id": "side_store_errand",
+    "title": "Quick Errand",
+    "type": "side",
+    "steps": [
+      {
+        "id": "buy_supplies",
+        "description": "Buy school supplies from the convenience store.",
+        "requiredConditions": [
+          { "type": "scene", "key": "convenience_store", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_store_visit"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 1 },
+      "relationship": { "shop_owner": 2 }
+    }
+  },
+  {
+    "id": "side_friend_visit",
+    "title": "Visiting Alex",
+    "type": "side",
+    "steps": [
+      {
+        "id": "meet_alex_mom",
+        "description": "Visit Alex's house and meet their mom.",
+        "requiredConditions": [
+          { "type": "scene", "key": "friend_house", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_friend_house"]
+      },
+      {
+        "id": "play_games",
+        "description": "Spend time playing games together.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_play_games"]
+      }
+    ],
+    "rewards": {
+      "stats": { "stress": -2 },
+      "relationship": { "alex": 3, "alex_mom": 3 }
+    }
+  },
+  {
+    "id": "side_understand_bryce",
+    "title": "Another Perspective",
+    "type": "side",
+    "steps": [
+      {
+        "id": "observe_bryce",
+        "description": "Notice something different about Bryce.",
+        "requiredConditions": [
+          { "type": "scene", "key": "cafeteria", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_observe_bryce"]
+      },
+      {
+        "id": "small_kindness",
+        "description": "Show a small act of kindness.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_kindness"]
+      }
+    ],
+    "rewards": {
+      "stats": { "empathy": 3 },
+      "relationship": { "bryce": 5 }
+    }
+  },
+  {
+    "id": "side_class_project",
+    "title": "Team Project",
+    "type": "side",
+    "steps": [
+      {
+        "id": "form_team",
+        "description": "Form a team for the class project.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_project_team"]
+      },
+      {
+        "id": "work_together",
+        "description": "Work on the project with your team.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_project_work"]
+      },
+      {
+        "id": "present_project",
+        "description": "Present your project to the class.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_project_present"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 3, "reputation": 2 },
+      "relationship": { "ms_carter": 2, "alex": 2, "sam": 2 }
+    }
+  },
+  {
+    "id": "side_morning_routine",
+    "title": "Good Morning",
+    "type": "side",
+    "steps": [
+      {
+        "id": "breakfast_talk",
+        "description": "Have breakfast and talk with parents about the day ahead.",
+        "requiredConditions": [
+          { "type": "scene", "key": "home_morning", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_morning"]
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 1 },
+      "relationship": { "mom": 1, "dad": 1 }
+    }
+  },
+  {
+    "id": "main_resolution",
+    "title": "Finding Resolution",
+    "type": "main",
+    "prerequisite": "main_building_allies",
+    "steps": [
+      {
+        "id": "group_discussion",
+        "description": "Discuss the bullying situation with your friend group.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_group_plan"]
+      },
+      {
+        "id": "choose_approach",
+        "description": "Decide how to handle the situation.",
+        "requiredConditions": [],
+        "branches": [
+          {
+            "id": "confront_together",
+            "label": "Confront Bryce with friends",
+            "nextStep": "group_confrontation"
+          },
+          {
+            "id": "report_adults",
+            "label": "Report to adults",
+            "nextStep": "adult_intervention"
+          },
+          {
+            "id": "extend_olive_branch",
+            "label": "Try to understand Bryce",
+            "nextStep": "empathy_approach"
+          }
+        ]
+      },
+      {
+        "id": "group_confrontation",
+        "description": "Stand up to Bryce together with your friends.",
+        "requiredConditions": [
+          { "type": "scene", "key": "playground", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_confrontation"],
+        "outcome": "confrontation"
+      },
+      {
+        "id": "adult_intervention",
+        "description": "Ms. Thompson and Mr. Wilson address the situation.",
+        "requiredConditions": [
+          { "type": "scene", "key": "principal_office", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_intervention"],
+        "outcome": "intervention"
+      },
+      {
+        "id": "empathy_approach",
+        "description": "Try to connect with Bryce one-on-one.",
+        "requiredConditions": [
+          { "type": "scene", "key": "cafeteria", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_empathy"],
+        "outcome": "empathy"
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 5, "empathy": 5 },
+      "relationship": {}
+    }
+  },
+  {
+    "id": "branch_talent_show",
+    "title": "The Talent Show",
+    "type": "side",
+    "steps": [
+      {
+        "id": "hear_announcement",
+        "description": "Hear about the upcoming talent show.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_talent_announcement"]
+      },
+      {
+        "id": "decide_participation",
+        "description": "Decide whether to participate.",
+        "requiredConditions": [],
+        "branches": [
+          {
+            "id": "perform_solo",
+            "label": "Perform solo",
+            "nextStep": "prepare_solo"
+          },
+          {
+            "id": "group_act",
+            "label": "Join friends for a group act",
+            "nextStep": "prepare_group"
+          },
+          {
+            "id": "help_backstage",
+            "label": "Help behind the scenes",
+            "nextStep": "backstage_crew"
+          }
+        ]
+      },
+      {
+        "id": "prepare_solo",
+        "description": "Practice your solo performance.",
+        "requiredConditions": [
+          { "type": "scene", "key": "home_evening", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_solo_practice"],
+        "outcome": "solo"
+      },
+      {
+        "id": "prepare_group",
+        "description": "Rehearse with Alex and Sam.",
+        "requiredConditions": [
+          { "type": "scene", "key": "playground", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_group_rehearsal"],
+        "outcome": "group"
+      },
+      {
+        "id": "backstage_crew",
+        "description": "Help set up the stage and props.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_backstage"],
+        "outcome": "backstage"
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 3, "reputation": 2 },
+      "relationship": {}
+    }
+  },
+  {
+    "id": "branch_new_student",
+    "title": "The New Kid",
+    "type": "side",
+    "steps": [
+      {
+        "id": "notice_new_student",
+        "description": "A new student arrives in class.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_new_student"]
+      },
+      {
+        "id": "approach_choice",
+        "description": "How do you want to welcome them?",
+        "requiredConditions": [],
+        "branches": [
+          {
+            "id": "be_first_friend",
+            "label": "Introduce yourself right away",
+            "nextStep": "immediate_welcome"
+          },
+          {
+            "id": "invite_lunch",
+            "label": "Invite them to sit with you at lunch",
+            "nextStep": "lunch_invitation"
+          },
+          {
+            "id": "wait_and_observe",
+            "label": "Wait to see what they're like",
+            "nextStep": "gradual_approach"
+          }
+        ]
+      },
+      {
+        "id": "immediate_welcome",
+        "description": "Welcome the new student warmly.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_immediate_welcome"],
+        "outcome": "immediate"
+      },
+      {
+        "id": "lunch_invitation",
+        "description": "Invite them to join you and your friends at lunch.",
+        "requiredConditions": [
+          { "type": "scene", "key": "cafeteria", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_lunch_invite"],
+        "outcome": "lunch"
+      },
+      {
+        "id": "gradual_approach",
+        "description": "Get to know them over time.",
+        "requiredConditions": [],
+        "onEnterEvents": ["trigger_dialogue_gradual"],
+        "outcome": "gradual"
+      }
+    ],
+    "rewards": {
+      "stats": { "empathy": 3 },
+      "relationship": {}
+    }
+  },
+  {
+    "id": "branch_lost_pet",
+    "title": "Lost and Found",
+    "type": "side",
+    "steps": [
+      {
+        "id": "see_poster",
+        "description": "Notice a 'Lost Dog' poster near the store.",
+        "requiredConditions": [
+          { "type": "scene", "key": "convenience_store", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_lost_pet"]
+      },
+      {
+        "id": "decide_help",
+        "description": "Decide if you want to help search.",
+        "requiredConditions": [],
+        "branches": [
+          {
+            "id": "search_park",
+            "label": "Search the park",
+            "nextStep": "park_search"
+          },
+          {
+            "id": "ask_neighbors",
+            "label": "Ask neighbors if they've seen the dog",
+            "nextStep": "neighbor_inquiry"
+          },
+          {
+            "id": "spread_word",
+            "label": "Tell friends to keep an eye out",
+            "nextStep": "social_network"
+          }
+        ]
+      },
+      {
+        "id": "park_search",
+        "description": "Search the park for the missing dog.",
+        "requiredConditions": [
+          { "type": "scene", "key": "park", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_park_search"],
+        "outcome": "found_park"
+      },
+      {
+        "id": "neighbor_inquiry",
+        "description": "Ask around the neighborhood.",
+        "requiredConditions": [
+          { "type": "scene", "key": "convenience_store", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_neighbor_ask"],
+        "outcome": "found_neighbor"
+      },
+      {
+        "id": "social_network",
+        "description": "Get your friends to help spread the word.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_spread_word"],
+        "outcome": "found_network"
+      }
+    ],
+    "rewards": {
+      "stats": { "empathy": 2, "reputation": 3 },
+      "relationship": { "shop_owner": 5 }
+    }
+  },
+  {
+    "id": "branch_science_fair",
+    "title": "Science Fair Partners",
+    "type": "side",
+    "steps": [
+      {
+        "id": "fair_announced",
+        "description": "Ms. Carter announces the upcoming science fair.",
+        "requiredConditions": [
+          { "type": "scene", "key": "classroom_5a", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_fair_announce"]
+      },
+      {
+        "id": "partner_choice",
+        "description": "Choose your science fair partner.",
+        "requiredConditions": [],
+        "branches": [
+          {
+            "id": "partner_alex",
+            "label": "Partner with Alex",
+            "nextStep": "work_with_alex"
+          },
+          {
+            "id": "partner_sam",
+            "label": "Partner with Sam",
+            "nextStep": "work_with_sam"
+          },
+          {
+            "id": "solo_project",
+            "label": "Work alone on something ambitious",
+            "nextStep": "ambitious_solo"
+          }
+        ]
+      },
+      {
+        "id": "work_with_alex",
+        "description": "Build a volcano experiment with Alex.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_alex_project"],
+        "outcome": "alex_partner"
+      },
+      {
+        "id": "work_with_sam",
+        "description": "Create a plant growth study with Sam.",
+        "requiredConditions": [
+          { "type": "scene", "key": "library", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_sam_project"],
+        "outcome": "sam_partner"
+      },
+      {
+        "id": "ambitious_solo",
+        "description": "Take on a challenging solo project.",
+        "requiredConditions": [
+          { "type": "scene", "key": "home_evening", "op": "==", "value": true }
+        ],
+        "onEnterEvents": ["trigger_dialogue_solo_science"],
+        "outcome": "solo_project"
+      }
+    ],
+    "rewards": {
+      "stats": { "confidence": 3 },
+      "relationship": { "ms_carter": 3 }
+    }
+  }
+]

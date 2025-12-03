@@ -1,0 +1,122 @@
+[
+  {
+    "id": "home_morning",
+    "name": "Home (Morning)",
+    "timeOfDay": ["morning"],
+    "connections": ["school_gate"],
+    "backgroundPrompt": "suburban home interior morning light, cozy kitchen and hallway",
+    "backgroundImage": "/backgrounds/home_morning.svg"
+  },
+  {
+    "id": "home_evening",
+    "name": "Home (Evening)",
+    "timeOfDay": ["evening"],
+    "connections": ["street_corner"],
+    "backgroundPrompt": "warm home interior evening, living room with soft lighting",
+    "backgroundImage": "/backgrounds/home_morning.svg"
+  },
+  {
+    "id": "school_gate",
+    "name": "School Gate",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["home_morning", "hallway_morning", "street_corner"],
+    "backgroundPrompt": "elementary school entrance, soft sunlight, few students arriving",
+    "backgroundImage": "/backgrounds/school_gate.svg"
+  },
+  {
+    "id": "hallway_morning",
+    "name": "Hallway (Morning)",
+    "timeOfDay": ["morning"],
+    "connections": ["school_gate", "classroom_5a", "cafeteria", "library"],
+    "backgroundPrompt": "school hallway with lockers, bright morning light",
+    "backgroundImage": "/backgrounds/hallway_morning.svg"
+  },
+  {
+    "id": "hallway_afternoon",
+    "name": "Hallway (Afternoon)",
+    "timeOfDay": ["afternoon"],
+    "connections": ["classroom_5a", "school_gate", "counselor_office", "principal_office"],
+    "backgroundPrompt": "school hallway with lockers, warm afternoon tone",
+    "backgroundImage": "/backgrounds/hallway_morning.svg"
+  },
+  {
+    "id": "classroom_5a",
+    "name": "Classroom 5A",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["hallway_morning", "hallway_afternoon"],
+    "backgroundPrompt": "fifth grade classroom, desks, bulletin boards",
+    "backgroundImage": "/backgrounds/classroom_5a.svg"
+  },
+  {
+    "id": "cafeteria",
+    "name": "Cafeteria",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["hallway_morning", "playground"],
+    "backgroundPrompt": "school cafeteria with long tables, lunch trays, bright windows",
+    "backgroundImage": "/backgrounds/classroom_5a.svg"
+  },
+  {
+    "id": "library",
+    "name": "Library",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["hallway_morning"],
+    "backgroundPrompt": "quiet school library with bookshelves, reading tables, soft lighting",
+    "backgroundImage": "/backgrounds/classroom_5a.svg"
+  },
+  {
+    "id": "playground",
+    "name": "Playground",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["cafeteria", "school_gate"],
+    "backgroundPrompt": "school playground with swings and basketball court, sunny day",
+    "backgroundImage": "/backgrounds/school_gate.svg"
+  },
+  {
+    "id": "counselor_office",
+    "name": "Counselor's Office",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["hallway_afternoon"],
+    "backgroundPrompt": "comfortable counselor office with couch, plants, warm colors",
+    "backgroundImage": "/backgrounds/classroom_5a.svg"
+  },
+  {
+    "id": "principal_office",
+    "name": "Principal's Office",
+    "timeOfDay": ["morning", "afternoon"],
+    "connections": ["hallway_afternoon"],
+    "backgroundPrompt": "formal principal office with desk, certificates on wall",
+    "backgroundImage": "/backgrounds/classroom_5a.svg"
+  },
+  {
+    "id": "street_corner",
+    "name": "Street Corner",
+    "timeOfDay": ["afternoon", "evening"],
+    "connections": ["school_gate", "home_evening", "park", "convenience_store", "friend_house"],
+    "backgroundPrompt": "suburban street with trees and houses, late afternoon light",
+    "backgroundImage": "/backgrounds/street_corner.svg"
+  },
+  {
+    "id": "park",
+    "name": "Park",
+    "timeOfDay": ["afternoon", "evening"],
+    "connections": ["street_corner"],
+    "backgroundPrompt": "small neighborhood park with bench, trees, playground equipment",
+    "backgroundImage": "/backgrounds/street_corner.svg"
+  },
+  {
+    "id": "convenience_store",
+    "name": "Convenience Store",
+    "timeOfDay": ["afternoon", "evening"],
+    "connections": ["street_corner"],
+    "backgroundPrompt": "small convenience store interior, snacks and drinks on shelves",
+    "backgroundImage": "/backgrounds/street_corner.svg"
+  },
+  {
+    "id": "friend_house",
+    "name": "Friend's House",
+    "timeOfDay": ["afternoon", "evening"],
+    "connections": ["street_corner"],
+    "backgroundPrompt": "cozy home living room, video game console, comfortable couch",
+    "backgroundImage": "/backgrounds/home_morning.svg"
+  }
+]

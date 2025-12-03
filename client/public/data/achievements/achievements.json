@@ -1,0 +1,179 @@
+[
+  {
+    "id": "first_day",
+    "title": "First Day Hero",
+    "description": "Complete your first day at school",
+    "icon": "star",
+    "condition": {
+      "type": "questComplete",
+      "questId": "main_intro_day1"
+    },
+    "reward": { "confidence": 2 }
+  },
+  {
+    "id": "true_friend",
+    "title": "True Friend",
+    "description": "Form a genuine friendship with Alex",
+    "icon": "heart",
+    "condition": {
+      "type": "questComplete",
+      "questId": "main_making_friends"
+    },
+    "reward": { "empathy": 2 }
+  },
+  {
+    "id": "stood_ground",
+    "title": "Stood Your Ground",
+    "description": "Face the bully and stay strong",
+    "icon": "shield",
+    "condition": {
+      "type": "questComplete",
+      "questId": "main_bully_encounter"
+    },
+    "reward": { "confidence": 3 }
+  },
+  {
+    "id": "helping_hand",
+    "title": "Helping Hand",
+    "description": "Help 3 people with their problems",
+    "icon": "hand",
+    "condition": {
+      "type": "counter",
+      "counter": "people_helped",
+      "value": 3
+    },
+    "reward": { "empathy": 3, "reputation": 2 }
+  },
+  {
+    "id": "book_worm",
+    "title": "Bookworm",
+    "description": "Spend time in the library 5 times",
+    "icon": "book",
+    "condition": {
+      "type": "counter",
+      "counter": "library_visits",
+      "value": 5
+    },
+    "reward": { "confidence": 2 }
+  },
+  {
+    "id": "social_butterfly",
+    "title": "Social Butterfly",
+    "description": "Talk to 10 different NPCs",
+    "icon": "users",
+    "condition": {
+      "type": "counter",
+      "counter": "npcs_met",
+      "value": 10
+    },
+    "reward": { "reputation": 3 }
+  },
+  {
+    "id": "peacemaker",
+    "title": "Peacemaker",
+    "description": "Successfully mediate a conflict",
+    "icon": "peace",
+    "condition": {
+      "type": "counter",
+      "counter": "conflicts_resolved",
+      "value": 1
+    },
+    "reward": { "empathy": 3, "reputation": 2 }
+  },
+  {
+    "id": "stress_free",
+    "title": "Stress Free",
+    "description": "Reduce your stress to 0",
+    "icon": "calm",
+    "condition": {
+      "type": "stat",
+      "stat": "stress",
+      "op": "<=",
+      "value": 0
+    },
+    "reward": {}
+  },
+  {
+    "id": "confident",
+    "title": "Confident Kid",
+    "description": "Reach 50 confidence",
+    "icon": "trophy",
+    "condition": {
+      "type": "stat",
+      "stat": "confidence",
+      "op": ">=",
+      "value": 50
+    },
+    "reward": { "reputation": 5 }
+  },
+  {
+    "id": "empathetic",
+    "title": "Heart of Gold",
+    "description": "Reach 50 empathy",
+    "icon": "heart-gold",
+    "condition": {
+      "type": "stat",
+      "stat": "empathy",
+      "op": ">=",
+      "value": 50
+    },
+    "reward": { "reputation": 5 }
+  },
+  {
+    "id": "popular",
+    "title": "Popular Kid",
+    "description": "Reach 30 reputation",
+    "icon": "crown",
+    "condition": {
+      "type": "stat",
+      "stat": "reputation",
+      "op": ">=",
+      "value": 30
+    },
+    "reward": {}
+  },
+  {
+    "id": "family_first",
+    "title": "Family First",
+    "description": "Complete the family dinner quest",
+    "icon": "home",
+    "condition": {
+      "type": "questComplete",
+      "questId": "side_family_dinner"
+    },
+    "reward": { "stress": -5 }
+  },
+  {
+    "id": "team_player",
+    "title": "Team Player",
+    "description": "Complete the class project successfully",
+    "icon": "team",
+    "condition": {
+      "type": "questComplete",
+      "questId": "side_class_project"
+    },
+    "reward": { "confidence": 2, "reputation": 2 }
+  },
+  {
+    "id": "understanding",
+    "title": "Walking in Their Shoes",
+    "description": "Try to understand Bryce's perspective",
+    "icon": "eye",
+    "condition": {
+      "type": "questComplete",
+      "questId": "side_understand_bryce"
+    },
+    "reward": { "empathy": 5 }
+  },
+  {
+    "id": "all_allies",
+    "title": "Stronger Together",
+    "description": "Build a support network of friends",
+    "icon": "group",
+    "condition": {
+      "type": "questComplete",
+      "questId": "main_building_allies"
+    },
+    "reward": { "confidence": 5, "empathy": 3, "reputation": 3 }
+  }
+]

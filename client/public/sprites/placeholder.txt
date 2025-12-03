@@ -1,0 +1,1 @@
+Placeholder sprites live here. Replace with actual PNGs (player.png, npc_<id>.png, npc_generic.png).

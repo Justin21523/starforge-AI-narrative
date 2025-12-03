@@ -1,0 +1,122 @@
+[
+  {
+    "id": "alex",
+    "name": "Alex",
+    "roleTags": ["friend", "classmate"],
+    "persona": "Curious and supportive classmate who likes science projects. Always eager to help and share discoveries.",
+    "initialStats": { "friendship": 10, "trust": 8 },
+    "imagePrompt": "11-year-old boy in school hoodie, friendly smile, classroom background"
+  },
+  {
+    "id": "sam",
+    "name": "Sam",
+    "roleTags": ["friend", "classmate"],
+    "persona": "Quiet and thoughtful student who loves reading. A bit shy but very loyal once you become friends.",
+    "initialStats": { "friendship": 5, "trust": 10 },
+    "imagePrompt": "11-year-old child with glasses, holding a book, gentle expression"
+  },
+  {
+    "id": "bryce",
+    "name": "Bryce",
+    "roleTags": ["bully"],
+    "persona": "Rough on the surface, tests boundaries, often hangs near lockers. Actually insecure underneath.",
+    "initialStats": { "friendship": -5, "trust": 2 },
+    "imagePrompt": "11-year-old boy with backpack, serious expression, school hallway"
+  },
+  {
+    "id": "tyler",
+    "name": "Tyler",
+    "roleTags": ["bully", "follower"],
+    "persona": "Bryce's sidekick who follows along with teasing. Can be swayed to be nicer when alone.",
+    "initialStats": { "friendship": -3, "trust": 3 },
+    "imagePrompt": "11-year-old boy with cap, uncertain expression, playground background"
+  },
+  {
+    "id": "mom",
+    "name": "Mom",
+    "roleTags": ["family", "adult", "supportive"],
+    "persona": "Caring mother who always listens and offers comfort. Works from home and values open communication.",
+    "initialStats": { "friendship": 50, "trust": 50 },
+    "imagePrompt": "caring mother in home kitchen, warm smile, casual home clothes"
+  },
+  {
+    "id": "dad",
+    "name": "Dad",
+    "roleTags": ["family", "adult", "supportive"],
+    "persona": "Supportive father who encourages problem-solving and standing up for oneself. Works office hours.",
+    "initialStats": { "friendship": 50, "trust": 45 },
+    "imagePrompt": "friendly father in home living room, casual attire, encouraging expression"
+  },
+  {
+    "id": "ms_carter",
+    "name": "Ms. Carter",
+    "roleTags": ["teacher", "adult", "authority"],
+    "persona": "Homeroom teacher who values honesty and teamwork, encourages reporting issues. Fair and observant.",
+    "initialStats": { "friendship": 5, "trust": 12 },
+    "imagePrompt": "teacher in classroom, warm tone, supportive stance"
+  },
+  {
+    "id": "mr_chen",
+    "name": "Mr. Chen",
+    "roleTags": ["teacher", "adult", "librarian"],
+    "persona": "School librarian who loves sharing books and stories. Quiet but very perceptive about student troubles.",
+    "initialStats": { "friendship": 8, "trust": 15 },
+    "imagePrompt": "middle-aged librarian among bookshelves, kind eyes, glasses"
+  },
+  {
+    "id": "ms_thompson",
+    "name": "Ms. Thompson",
+    "roleTags": ["counselor", "adult", "supportive"],
+    "persona": "School counselor who specializes in helping students work through social challenges. Always available to talk.",
+    "initialStats": { "friendship": 10, "trust": 20 },
+    "imagePrompt": "school counselor in comfortable office, warm and welcoming expression"
+  },
+  {
+    "id": "mr_wilson",
+    "name": "Mr. Wilson",
+    "roleTags": ["principal", "adult", "authority"],
+    "persona": "School principal who takes bullying seriously. Stern but fair, believes in second chances.",
+    "initialStats": { "friendship": 0, "trust": 15 },
+    "imagePrompt": "school principal at desk, formal attire, serious but kind expression"
+  },
+  {
+    "id": "shop_owner",
+    "name": "Mr. Park",
+    "roleTags": ["community", "adult", "shopkeeper"],
+    "persona": "Friendly convenience store owner who knows all the neighborhood kids. Often gives good advice.",
+    "initialStats": { "friendship": 15, "trust": 10 },
+    "imagePrompt": "friendly shopkeeper behind counter, warm smile, neighborhood store"
+  },
+  {
+    "id": "alex_mom",
+    "name": "Mrs. Johnson",
+    "roleTags": ["community", "adult", "parent"],
+    "persona": "Alex's mother who welcomes friends warmly. Often has snacks ready and checks in on how school is going.",
+    "initialStats": { "friendship": 20, "trust": 15 },
+    "imagePrompt": "friendly mother in home, welcoming gesture, cozy living room"
+  },
+  {
+    "id": "coach_martinez",
+    "name": "Coach Martinez",
+    "roleTags": ["teacher", "adult", "sports"],
+    "persona": "PE teacher who emphasizes teamwork and fair play. Good at spotting conflicts and mediating.",
+    "initialStats": { "friendship": 5, "trust": 10 },
+    "imagePrompt": "PE teacher with whistle, athletic wear, gymnasium background"
+  },
+  {
+    "id": "emma",
+    "name": "Emma",
+    "roleTags": ["classmate", "neutral"],
+    "persona": "Popular student who stays out of conflicts. Could be an ally if approached right.",
+    "initialStats": { "friendship": 0, "trust": 5 },
+    "imagePrompt": "11-year-old girl with confident posture, school uniform, friendly expression"
+  },
+  {
+    "id": "jordan",
+    "name": "Jordan",
+    "roleTags": ["classmate", "bystander"],
+    "persona": "Observant student who sees everything but rarely speaks up. Knows a lot about what happens at school.",
+    "initialStats": { "friendship": 3, "trust": 8 },
+    "imagePrompt": "11-year-old child sitting quietly, observant eyes, cafeteria background"
+  }
+]
