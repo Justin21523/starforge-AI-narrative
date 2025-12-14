@@ -7,7 +7,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 from app.api import deps
-from app.game.schemas import DialogueRequest, DialogueResponse, QuestUpdate
+from app.game.schemas import DialogueRequest, DialogueResponse, QuestUpdate, TravelRequest, TravelResponse
 from app.game.services.player_service import PlayerService
 from app.ai.rag.vector_store import VectorStore
 from app.ai.tools.search_lore import SearchLoreTool
@@ -18,6 +18,27 @@ router = APIRouter()
 def _read_json(path: Path):
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@router.post("/travel")
+async def travel(
+    req: TravelRequest, player_service=Depends(deps.get_player_service)
+) -> TravelResponse:
+    """玩家移動到新場景。"""
+    # 這裡可以加入驗證邏輯：是否可從當前場景移動到目標場景？
+    # 暫時允許任意移動 (Debug/Teleport mode)
+    await player_service.set_current_scene_async(req.player_id, req.destination_id)
+    
+    # 讀取目標場景資料
+    data_dir = deps.get_data_dir()
+    scenes = _read_json(data_dir / "scenes" / "base_scenes.json")
+    target_scene = next((s for s in scenes if s["id"] == req.destination_id), None)
+    
+    return TravelResponse(
+        success=True,
+        currentSceneId=req.destination_id,
+        sceneData=target_scene
+    )
 
 
 @router.get("/scenes")

@@ -75,3 +75,14 @@ class DialogueResponse(BaseCamelModel):
     suggested_player_choices: List[str] = Field(..., alias="suggestedPlayerChoices")
     internal_effects: Optional[InternalEffects] = Field(None, alias="internalEffects")
     meta: Optional[dict] = None
+
+
+class TravelRequest(BaseCamelModel):
+    player_id: str = Field(..., alias="playerId")
+    destination_id: str = Field(..., alias="destinationId")
+
+
+class TravelResponse(BaseCamelModel):
+    success: bool
+    current_scene_id: str = Field(..., alias="currentSceneId")
+    scene_data: Optional[dict] = Field(None, alias="sceneData")
