@@ -13,7 +13,10 @@ from app.game.schemas import DialogueRequest, DialogueResponse
 router = APIRouter()
 
 
-def get_dialogue_agent(settings: Settings = Depends(get_settings)) -> DialogueAgent:
+def get_dialogue_agent(
+    settings: Settings = Depends(get_settings),
+    safety_agent: SafetyAgent = Depends(deps.get_safety_agent),
+) -> DialogueAgent:
     """
     建立 DialogueAgent 實例。
 
@@ -27,7 +30,7 @@ def get_dialogue_agent(settings: Settings = Depends(get_settings)) -> DialogueAg
         llm_client=llm_client,
         player_service=deps.get_player_service(),
         quest_service=deps.get_quest_service(),
-        safety_agent=SafetyAgent(),
+        safety_agent=safety_agent,
     )
 
 

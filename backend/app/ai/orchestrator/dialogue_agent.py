@@ -49,15 +49,29 @@ class DialogueAgent:
         self.tools.register(WebSearchTool())
 
     async def handle(self, req: DialogueRequest) -> DialogueResponse:
+        # 1. Safety Check (Input)
+        # Check current user input (last entry if it's from player)
+        if req.history and req.history[-1].speaker == "player":
+            unsafe_msg = self.safety_agent.check_input(req.history[-1].text)
+            if unsafe_msg:
+                return DialogueResponse(
+                    npcText=unsafe_msg,
+                    suggestedPlayerChoices=["Sorry...", "I understand."],
+                    internalEffects=None
+                )
+
         plan_steps = await self.planner.plan_for_dialogue(req)
         plan_results = await self.tools.execute_plan(plan_steps)
         trace = OrchestrationTrace(steps=plan_steps, results=plan_results)
 
         prompt = self._build_prompt(req, trace)
-        raw = await self.llm_client.complete(prompt)
-        flagged = self.safety_agent.precheck([h.text for h in req.history])
-        safe_raw = self.safety_agent.filter_dialogue(raw, flagged)
-        response = self._parse_response(safe_raw)
+        raw_dict = await self.llm_client.complete(prompt) # Returns dict now based on Mock client
+        
+        # 2. Parse Response
+        response = self._parse_response(raw_dict)
+
+        # 3. Safety Check (Output)
+        response = self.safety_agent.check_output(response)
 
         # 將效果寫回狀態（使用 mock / 記憶體實作，不觸發外部資源）
         self.player_service.apply_effects(

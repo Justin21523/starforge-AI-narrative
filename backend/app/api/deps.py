@@ -6,6 +6,7 @@ from app.game.services.player_service import PlayerService
 from app.game.services.quest_service import QuestService
 from app.game.services.scene_service import SceneService
 from app.game.services.save_service import SaveService
+from app.ai.orchestrator.safety_agent import SafetyAgent, safety_agent
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -30,6 +31,10 @@ def get_scene_service() -> SceneService:
 
 def get_save_service() -> SaveService:
     return save_service
+
+
+def get_safety_agent() -> SafetyAgent:
+    return safety_agent
 
 
 def get_data_dir() -> Path:
