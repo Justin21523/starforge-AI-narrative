@@ -71,4 +71,14 @@ export class GameHttpClient {
       body: JSON.stringify(updates),
     });
   }
+
+  async travel(playerId: string, destinationId: string): Promise<{ success: boolean; currentSceneId: string; sceneData?: any }> {
+    const res = await fetch(`${this.baseUrl}/travel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId, destinationId }),
+    });
+    if (!res.ok) throw new Error("Failed to travel");
+    return res.json();
+  }
 }

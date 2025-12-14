@@ -3,6 +3,8 @@ import { SceneManager, TransitionType } from "../../core/SceneManager";
 import { InputManager } from "../../core/InputManager";
 import { DialogueOverlay } from "../../ui/DialogueOverlay";
 import { PauseMenu } from "../../ui/PauseMenu";
+import { QuestTracker } from "../../ui/QuestTracker";
+import { FriendshipIndicator, RelationshipPanel } from "../../ui/FriendshipIndicator";
 import { appStore } from "../../state/store";
 import { getNpcsForScene, SceneNpcPlacement } from "../SceneNpcMapping";
 import { AiClient, MockAiClient, HttpAiClient } from "../../api/aiClient";
@@ -12,10 +14,21 @@ import { ToastManager } from "../../ui/Toast";
 import { EventManager, GameEvent } from "../EventManager";
 import { AchievementManager, Achievement } from "../AchievementManager";
 import { TutorialManager } from "../../ui/TutorialManager";
+import { BuildingEntranceManager } from "../BuildingEntranceManager";
+import { InteriorScene } from "./InteriorScene";
+import { QuestManager } from "../QuestManager";
+import { InventoryManager } from "../InventoryManager";
+import { ShopManager } from "../ShopManager";
+import { ShopUI } from "../../ui/ShopUI";
+import { MapOverlay } from "../../ui/MapOverlay";
+import { t } from "../../i18n/i18n";
+import { getAutoSaveManager } from "../../save/AutoSaveManager";
+import { getGameStats } from "../../stats/GameStats";
 import type { DialogueResponse } from "../../api/types";
 import type { AppConfig } from "../../state/appConfig";
+import type { BuildingDef } from "../../types/dataTypes";
 
-type GameMode = "explore" | "npc_select" | "dialogue" | "paused" | "event" | "tutorial";
+type GameMode = "explore" | "npc_select" | "dialogue" | "paused" | "event" | "tutorial" | "shop";
 
 /**
  * Main exploration scene where player can move around,
@@ -26,6 +39,9 @@ export class ExplorationScene extends BaseScene {
   private previousMode: GameMode = "explore";
   private overlay: DialogueOverlay;
   private pauseMenu: PauseMenu;
+  private questTracker: QuestTracker;
+  private friendshipIndicator: FriendshipIndicator;
+  private relationshipPanel: RelationshipPanel;
   private ai: AiClient;
   private httpClient = new GameHttpClient("/game");
   private toast?: ToastManager;
@@ -40,8 +56,40 @@ export class ExplorationScene extends BaseScene {
 
   // NPC selection
   private npcsInScene: SceneNpcPlacement[] = [];
+  private npcPatrolState: Record<
+    string,
+    {
+      base: number;
+      dir: 1 | -1;
+      range: number;
+      speed: number;
+      targetX: number;
+      lastPlan: number;
+      replanInterval: number;
+      cellSize: number;
+      visited: Map<string, number>;
+    }
+  > = {};
   private selectedNpcIndex = 0;
   private currentNpcId: string | null = null;
+
+  // NPC proximity interaction
+  private nearestNpc: SceneNpcPlacement | null = null;
+  private readonly INTERACTION_DISTANCE = 80; // pixels
+
+  // Building entrance system
+  private buildingManager: BuildingEntranceManager;
+  private nearestBuilding: BuildingDef | null = null;
+  private lastExteriorPosition: number = 0;
+
+  // Quest system
+  private questManager: QuestManager;
+
+  // Shop system
+  private inventoryManager: InventoryManager;
+  private shopManager: ShopManager;
+  private shopUI: ShopUI;
+  private mapOverlay: MapOverlay;
 
   // Dialogue history
   private dialogueHistory: { speaker: "player" | "npc"; text: string }[] = [];
@@ -76,12 +124,40 @@ export class ExplorationScene extends BaseScene {
       toastManager
     );
 
+    // Initialize quest tracker (positioned at top-left)
+    this.questTracker = new QuestTracker({
+      x: 10,
+      y: 50,
+      width: 280,
+      maxQuests: 3,
+    });
+
+    // Initialize friendship indicators
+    this.friendshipIndicator = new FriendshipIndicator();
+    this.relationshipPanel = new RelationshipPanel();
+
     // Initialize event and achievement managers
     this.eventManager = new EventManager();
     this.achievementManager = new AchievementManager();
     this.tutorialManager = new TutorialManager(inputManager, () => {
       this.mode = "explore";
     });
+
+    // Initialize building entrance manager
+    this.buildingManager = new BuildingEntranceManager();
+
+    // Initialize shop system
+    this.inventoryManager = new InventoryManager();
+    this.shopManager = new ShopManager();
+    this.shopUI = new ShopUI(inputManager, this.inventoryManager, this.shopManager);
+    this.mapOverlay = new MapOverlay();
+
+    // Load shop data (async, non-blocking)
+    this.inventoryManager.loadItems();
+    this.shopManager.loadShops();
+
+    // Quest manager
+    this.questManager = new QuestManager(this.httpClient, "player-001");
 
     // Load events and achievements (async, non-blocking)
     this.loadEventData();
@@ -124,9 +200,24 @@ export class ExplorationScene extends BaseScene {
 
   onEnter(): void {
     const state = appStore.getState().game;
-    this.npcsInScene = getNpcsForScene(state.sceneId);
+    // 深拷貝避免修改全域配置
+    this.npcsInScene = getNpcsForScene(state.sceneId).map((p) => ({ ...p }));
+    this.setupNpcPatrol(state.sceneId);
+    this.buildingManager.loadEntrances(state.sceneId);
     this.mode = "explore";
     this.dialogueHistory = [];
+
+    // 自動推進場景相關的任務步驟
+    const questUpdates = this.questManager.onSceneEntered(state.sceneId);
+    questUpdates.forEach((u) => this.questTracker.highlightQuest(u.questId));
+
+    // Update quest tracker with current quest data
+    this.updateQuestTracker();
+  }
+
+  private updateQuestTracker(): void {
+    const { quests, game } = appStore.getState();
+    this.questTracker.setQuests(quests, game.questStates);
   }
 
   onExit(): void {
@@ -134,9 +225,27 @@ export class ExplorationScene extends BaseScene {
     this.connectionMenuOpen = false;
   }
 
+  onResume(): void {
+    // Called when returning from interior scene
+    console.log("[ExplorationScene] Resumed from interior");
+    appStore.updatePlayerStats({ x: this.lastExteriorPosition });
+    this.buildingManager.loadEntrances(appStore.getState().game.sceneId);
+    this.mode = "explore";
+  }
+
   update(delta: number): void {
     // Update achievement notifications
     this.achievementManager.update();
+
+    // Update quest tracker animation
+    this.questTracker.update(delta);
+
+    // Update friendship UI
+    this.friendshipIndicator.update(delta);
+    this.relationshipPanel.update(delta);
+
+    // 更新路人巡邏
+    this.updateNpcPatrol(delta);
 
     // Periodic event check (only in explore mode)
     if (this.mode === "explore") {
@@ -145,9 +254,133 @@ export class ExplorationScene extends BaseScene {
         this.eventCheckTimer = 0;
         this.checkForRandomEvent();
       }
+
+      // Update NPC proximity detection
+      this.updateNpcProximity();
+
+      // Update building proximity detection
+      this.updateBuildingProximity();
     }
 
     this.handleInput(delta);
+  }
+
+  private setupNpcPatrol(sceneId: string): void {
+    this.npcPatrolState = {};
+    const mapWidth = this.getCurrentMapWidth();
+    const now = performance.now();
+    this.npcsInScene.forEach((npc, idx) => {
+      if (!npc.patrol) return;
+      const key = `${sceneId}-${npc.npcId}-${idx}`;
+      const dir = npc.facing === "left" ? -1 : 1;
+      const cellSize = 120;
+      const range = Math.min(npc.patrol.range, mapWidth);
+      this.npcPatrolState[key] = {
+        base: npc.x,
+        dir,
+        range,
+        speed: npc.patrol.speed ?? 30,
+        targetX: this.pickFrontierTarget(npc.x, range, mapWidth, dir),
+        lastPlan: now,
+        replanInterval: 2800, // ms
+        cellSize,
+        visited: new Map<string, number>(),
+      };
+    });
+  }
+
+  private pickFrontierTarget(baseX: number, range: number, mapWidth: number, dir: 1 | -1): number {
+    const now = Date.now();
+    const minX = Math.max(0, baseX - range);
+    const maxX = Math.min(mapWidth, baseX + range);
+    const cellSize = 120;
+    const candidates: { x: number; score: number }[] = [];
+    for (let x = minX; x <= maxX; x += cellSize) {
+      const distance = Math.abs(x - baseX);
+      const novelty = Math.random() * 0.2 + 0.8; // 假設有前端探索記憶時可改用 visited age
+      const forwardBias = dir === 1 ? x - baseX : baseX - x;
+      const biasScore = forwardBias > 0 ? 10 : 0;
+      const score = distance * 0.6 + novelty * 20 + biasScore;
+      candidates.push({ x: Math.min(Math.max(x, 0), mapWidth), score });
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates.length > 0 ? candidates[0].x : baseX;
+  }
+
+  private updateNpcPatrol(delta: number): void {
+    const mapWidth = this.getCurrentMapWidth();
+    const sceneId = appStore.getState().game.sceneId;
+    const now = performance.now();
+
+    this.npcsInScene.forEach((npc, idx) => {
+      if (!npc.patrol) return;
+      const key = `${sceneId}-${npc.npcId}-${idx}`;
+      const state = this.npcPatrolState[key];
+      if (!state) return;
+
+      // 若距離目標過近或超過重規劃時間，選新目標（帶前進偏好與距離/新鮮度）
+      const distToTarget = Math.abs(state.targetX - npc.x);
+      if (distToTarget < 12 || now - state.lastPlan > state.replanInterval) {
+        state.targetX = this.pickFrontierTarget(state.base, state.range, mapWidth, state.dir);
+        state.lastPlan = now;
+      }
+
+      // 依方向向目標前進
+      state.dir = state.targetX >= npc.x ? 1 : -1;
+      npc.facing = state.dir === 1 ? "right" : "left";
+      npc.x += state.dir * state.speed * delta;
+
+      // clamp
+      const leftBound = Math.max(0, state.base - state.range);
+      const rightBound = Math.min(mapWidth, state.base + state.range);
+      if (npc.x > rightBound) {
+        npc.x = rightBound;
+        state.dir = -1;
+        state.targetX = rightBound - 10;
+      } else if (npc.x < leftBound) {
+        npc.x = leftBound;
+        state.dir = 1;
+        state.targetX = leftBound + 10;
+      }
+    });
+  }
+
+  private updateNpcProximity(): void {
+    const playerX = appStore.getState().game.player.x;
+
+    let closest: SceneNpcPlacement | null = null;
+    let minDist = Infinity;
+
+    this.npcsInScene.forEach((npc) => {
+      const dist = Math.abs(npc.x - playerX);
+      if (dist < this.INTERACTION_DISTANCE && dist < minDist) {
+        minDist = dist;
+        closest = npc;
+      }
+    });
+
+    this.nearestNpc = closest;
+  }
+
+  private updateBuildingProximity(): void {
+    const playerX = appStore.getState().game.player.x;
+    const proximity = this.buildingManager.checkProximity(playerX);
+    this.nearestBuilding = proximity.entrance;
+  }
+
+  private enterBuilding(entrance: BuildingDef): void {
+    console.log(`[ExplorationScene] Entering building: ${entrance.id}`);
+    this.lastExteriorPosition = appStore.getState().game.player.x;
+
+    const interiorScene = new InteriorScene(
+      this.sceneManager,
+      this.input,
+      entrance.targetSceneId,
+      200  // Exit door position in interior
+    );
+
+    this.sceneManager.pushScene(interiorScene);
+    getGameStats().recordSceneVisit(entrance.targetSceneId);
   }
 
   private checkForRandomEvent(): void {
@@ -157,6 +390,7 @@ export class ExplorationScene extends BaseScene {
       this.eventManager.triggerEvent(event);
       this.previousMode = this.mode;
       this.mode = "event";
+      getGameStats().recordEventTriggered();
     }
   }
 
@@ -175,6 +409,31 @@ export class ExplorationScene extends BaseScene {
       return;
     }
 
+    // Handle shop mode
+    if (this.mode === "shop") {
+      this.shopUI.update();
+      if (!this.shopUI.isVisible()) {
+        this.mode = "explore";
+      }
+      return;
+    }
+
+    // Handle map overlay
+    if (this.mapOverlay.isVisible()) {
+      if (this.input.consumePress("ArrowUp")) this.mapOverlay.move(0, -1);
+      if (this.input.consumePress("ArrowDown")) this.mapOverlay.move(0, 1);
+      if (this.input.consumePress("ArrowLeft")) this.mapOverlay.move(-1, 0);
+      if (this.input.consumePress("ArrowRight")) this.mapOverlay.move(1, 0);
+      if (this.input.consumePress("Enter")) {
+        this.mapOverlay.confirm();
+      }
+      if (this.input.consumePress("KeyM") || this.input.consumePress("Escape")) {
+        this.mapOverlay.close();
+        this.mode = "explore";
+      }
+      return;
+    }
+
     // Handle event mode
     if (this.mode === "event") {
       this.handleEventInput();
@@ -187,6 +446,15 @@ export class ExplorationScene extends BaseScene {
       return;
     }
 
+    // Open map overlay
+    if (this.mode === "explore" && this.input.consumePress("KeyM")) {
+      this.mode = "map";
+      this.mapOverlay.open((sceneId) => {
+        this.navigateToScene(sceneId);
+      });
+      return;
+    }
+
     switch (this.mode) {
       case "explore":
         this.handleExploreInput(delta, state);
@@ -195,7 +463,7 @@ export class ExplorationScene extends BaseScene {
         this.handleNpcSelectInput();
         break;
       case "dialogue":
-        this.handleDialogueInput();
+        this.handleDialogueInput(delta);
         break;
     }
   }
@@ -220,6 +488,7 @@ export class ExplorationScene extends BaseScene {
       // Select choice
       if (this.input.consumePress("Enter")) {
         this.eventManager.selectChoice();
+        getGameStats().recordEventChoice();
       }
     }
   }
@@ -239,7 +508,7 @@ export class ExplorationScene extends BaseScene {
       TutorialManager.reset();
       this.mode = "tutorial";
       this.tutorialManager.start();
-      this.toast?.add("Tutorial restarted");
+      this.toast?.add(t("tutorial_restarted"));
     }
   }
 
@@ -256,24 +525,57 @@ export class ExplorationScene extends BaseScene {
     });
   }
 
+  private getCurrentMapWidth(): number {
+    const scenes = appStore.getState().scenes;
+    const state = appStore.getState().game;
+    const currentScene = scenes.find(s => s.id === state.sceneId);
+    return currentScene?.mapWidth ?? 960; // Default: no scrolling
+  }
+
+  private updateCamera(playerX: number, mapWidth: number): void {
+    const canvasWidth = 960;
+
+    // Center player, clamp to boundaries
+    let targetCameraX = playerX - canvasWidth / 2;
+    targetCameraX = Math.max(0, Math.min(mapWidth - canvasWidth, targetCameraX));
+
+    // Smooth lerp
+    const currentCameraX = appStore.getState().game.camera?.x ?? 0;
+    const newCameraX = currentCameraX + (targetCameraX - currentCameraX) * 0.15;
+
+    appStore.updateCameraPosition(newCameraX);
+  }
+
   private handleExploreInput(delta: number, state: ReturnType<typeof appStore.getState>["game"]): void {
-    const speed = 180 * delta;
+    const speed = 200 * delta;
+    const mapWidth = this.getCurrentMapWidth();
 
     // Movement
     if (this.input.isPressed("ArrowLeft")) {
-      appStore.updatePlayerStats({ x: Math.max(20, state.player.x - speed) });
+      const newX = Math.max(0, state.player.x - speed);
+      appStore.updatePlayerStats({
+        x: newX,
+        facingDirection: "left"
+      });
+      this.updateCamera(newX, mapWidth);
     }
     if (this.input.isPressed("ArrowRight")) {
-      appStore.updatePlayerStats({ x: Math.min(900, state.player.x + speed) });
+      const newX = Math.min(mapWidth, state.player.x + speed);
+      appStore.updatePlayerStats({
+        x: newX,
+        facingDirection: "right"
+      });
+      this.updateCamera(newX, mapWidth);
     }
 
-    // Open NPC selection (E key)
+    // Interact with nearest building or NPC (E key)
     if (this.input.consumePress("KeyE")) {
-      if (this.npcsInScene.length > 0) {
-        this.mode = "npc_select";
-        this.selectedNpcIndex = 0;
+      if (this.nearestBuilding) {
+        this.enterBuilding(this.nearestBuilding);
+      } else if (this.nearestNpc) {
+        this.startDialogue(this.nearestNpc.npcId);
       } else {
-        this.toast?.add("No NPCs in this area");
+        this.toast?.add(t("explore_nothing_nearby"));
       }
     }
 
@@ -283,6 +585,11 @@ export class ExplorationScene extends BaseScene {
         this.connectionMenuOpen = !this.connectionMenuOpen;
         this.selectedConnectionIndex = 0;
       }
+    }
+
+    // Toggle quest tracker (Q key)
+    if (this.input.consumePress("KeyQ")) {
+      this.questTracker.toggle();
     }
 
     // Handle connection menu
@@ -332,8 +639,11 @@ export class ExplorationScene extends BaseScene {
     }
   }
 
-  private handleDialogueInput(): void {
-    // Navigate choices
+  private handleDialogueInput(delta: number): void {
+    // Update typewriter animation
+    this.overlay.update(delta);
+
+    // Navigate choices (only when typewriter is complete)
     if (this.input.consumePress("ArrowUp")) {
       this.overlay.moveSelection(-1);
     }
@@ -341,12 +651,19 @@ export class ExplorationScene extends BaseScene {
       this.overlay.moveSelection(1);
     }
 
-    // Select choice
+    // Select choice or skip typewriter
     if (this.input.consumePress("Enter")) {
+      // First, try to skip typewriter if not complete
+      if (this.overlay.skipTypewriter()) {
+        return;
+      }
+
+      // Otherwise, select the choice
       const choice = this.overlay.getSelectedChoice();
       if (choice) {
         this.dialogueHistory.push({ speaker: "player", text: choice });
         this.dialogueHistory = this.dialogueHistory.slice(-6);
+        getGameStats().recordDialogueChoice();
         void this.triggerDialogue();
       }
     }
@@ -355,28 +672,58 @@ export class ExplorationScene extends BaseScene {
     if (this.input.consumePress("Escape")) {
       this.mode = "explore";
       this.currentNpcId = null;
+      this.relationshipPanel.hide();
     }
   }
 
   private async startDialogue(npcId: string): Promise<void> {
+    const npcs = appStore.getState().npcs;
+    const npcDef = npcs.find((n) => n.id === npcId);
+
+    // Check if NPC is a shopkeeper
+    if (npcDef?.roleTags?.includes("shopkeeper") || npcDef?.roleTags?.includes("merchant")) {
+      console.log(`[ExplorationScene] Opening shop for ${npcId}`);
+      this.openShop(npcId);
+      return;
+    }
+
     this.currentNpcId = npcId;
     this.mode = "dialogue";
     this.dialogueHistory = [];
 
+    // Record dialogue stats
+    getGameStats().recordDialogue(npcId);
+
     // Update store with current NPC
-    const npcs = appStore.getState().npcs;
-    const npcDef = npcs.find((n) => n.id === npcId);
     if (npcDef) {
+      const friendship = npcDef.initialStats?.friendship ?? 0;
+      const trust = npcDef.initialStats?.trust ?? 0;
+
       appStore.updateNpcStats({
         id: npcId,
         name: npcDef.name,
-        friendship: npcDef.initialStats?.friendship ?? 0,
-        trust: npcDef.initialStats?.trust ?? 0,
+        friendship,
+        trust,
         roleTags: npcDef.roleTags ?? [],
       });
+
+      // Set NPC info for dialogue overlay
+      this.overlay.setNpcInfo(npcDef.name, `/sprites/npc_${npcId}.svg`);
+
+      // Show relationship panel
+      this.relationshipPanel.setNpc(npcDef.name, friendship, trust);
+      this.relationshipPanel.show();
     }
 
     await this.triggerDialogue();
+  }
+
+  private openShop(npcId: string): void {
+    // Default shop ID based on NPC ID
+    const shopId = `${npcId}_shop`;
+    this.shopUI.open(shopId);
+    this.mode = "shop";
+    getGameStats().recordDialogue(npcId); // Count as interaction
   }
 
   private async triggerDialogue(): Promise<void> {
@@ -440,10 +787,32 @@ export class ExplorationScene extends BaseScene {
 
     if (res.internalEffects?.npcStatsDelta) {
       const delta = res.internalEffects.npcStatsDelta;
+      const newFriendship = state.npc.friendship + (delta.friendship ?? 0);
+      const newTrust = state.npc.trust + (delta.trust ?? 0);
+
       appStore.updateNpcStats({
-        friendship: state.npc.friendship + (delta.friendship ?? 0),
-        trust: state.npc.trust + (delta.trust ?? 0),
+        friendship: newFriendship,
+        trust: newTrust,
       });
+
+      // Show friendship change indicators (centered at top)
+      if (delta.friendship && delta.friendship !== 0) {
+        this.friendshipIndicator.showChange({
+          type: "friendship",
+          delta: delta.friendship,
+          npcName: state.npc.name,
+        }, 480, 120);
+      }
+      if (delta.trust && delta.trust !== 0) {
+        this.friendshipIndicator.showChange({
+          type: "trust",
+          delta: delta.trust,
+          npcName: state.npc.name,
+        }, 480, 120);
+      }
+
+      // Update relationship panel
+      this.relationshipPanel.setNpc(state.npc.name, newFriendship, newTrust);
     }
 
     if (res.internalEffects?.questUpdates?.length) {
@@ -451,9 +820,14 @@ export class ExplorationScene extends BaseScene {
       const next = { ...current };
       res.internalEffects.questUpdates.forEach((q) => {
         next[q.questId] = q.newStage;
+        // Highlight updated quest in tracker
+        this.questTracker.highlightQuest(q.questId);
       });
       appStore.setQuestStates(next);
-      this.toast?.add("Quest updated");
+      this.toast?.add(t("quest_updated"));
+
+      // Update quest tracker
+      this.updateQuestTracker();
 
       void this.httpClient
         .updatePlayerQuests("player-001", res.internalEffects.questUpdates)
@@ -464,29 +838,56 @@ export class ExplorationScene extends BaseScene {
     this.achievementManager.checkAchievements();
   }
 
-  private navigateToScene(targetSceneId: string): void {
-    const scene = loadScene(targetSceneId);
-    if (scene) {
-      appStore.setScene(scene.id, scene.name, scene.connections);
-      appStore.updatePlayerStats({ x: 240 });
-      this.npcsInScene = getNpcsForScene(targetSceneId);
-      this.connectionMenuOpen = false;
-      this.mode = "explore";
-      this.toast?.add(`Moved to ${scene.name}`);
+  private async navigateToScene(targetSceneId: string): Promise<void> {
+    try {
+      const state = appStore.getState().game;
+      await this.httpClient.travel(state.player.id, targetSceneId);
+
+      const scene = loadScene(targetSceneId);
+      if (scene) {
+        appStore.setScene(scene.id, scene.name, scene.connections);
+        appStore.updatePlayerStats({ x: 240 });
+        this.npcsInScene = getNpcsForScene(targetSceneId).map((p) => ({ ...p }));
+        this.setupNpcPatrol(targetSceneId);
+        this.connectionMenuOpen = false;
+        this.mode = "explore";
+        this.toast?.add(`${t("explore_moved_to")} ${scene.name}`);
+
+        // Record scene visit stats
+        getGameStats().recordSceneVisit(targetSceneId);
+
+        // Trigger auto-save on scene change
+        getAutoSaveManager("player-001").onSceneChange(targetSceneId);
+
+        // 場景觸發任務步驟
+        const questUpdates = this.questManager.onSceneEntered(targetSceneId);
+        questUpdates.forEach((u) => this.questTracker.highlightQuest(u.questId));
+        this.updateQuestTracker();
+      }
+    } catch (error) {
+      console.error("Travel failed:", error);
+      this.toast?.add("Travel failed");
     }
   }
 
   render(ctx: CanvasRenderingContext2D): void {
     const { width, height } = ctx.canvas;
     const state = appStore.getState().game;
+    const cameraX = state.camera?.x ?? 0;
 
     ctx.save();
 
-    // Background
-    this.renderBackground(ctx, state.sceneId, state.sceneName);
+    // Background with parallax (0.5x camera speed)
+    this.renderBackground(ctx, state.sceneId, state.sceneName, cameraX * 0.5);
+
+    // Apply camera transform to world objects
+    ctx.translate(-cameraX, 0);
 
     // Floor
     this.renderFloor(ctx);
+
+    // Buildings (behind NPCs and player)
+    this.buildingManager.renderEntrances(ctx, state.player.x, height);
 
     // NPCs
     this.renderNpcs(ctx, height);
@@ -494,7 +895,11 @@ export class ExplorationScene extends BaseScene {
     // Player
     this.renderPlayer(ctx, state.player.x, height);
 
-    // HUD
+    // Restore to screen space for UI elements
+    ctx.restore();
+    ctx.save();
+
+    // HUD (screen space)
     this.renderHUD(ctx, state);
 
     // Mode-specific UI
@@ -505,6 +910,9 @@ export class ExplorationScene extends BaseScene {
       case "dialogue":
         this.overlay.render(ctx);
         break;
+      case "shop":
+        this.shopUI.render(ctx);
+        break;
       case "paused":
         this.pauseMenu.render(ctx);
         break;
@@ -514,12 +922,32 @@ export class ExplorationScene extends BaseScene {
       case "tutorial":
         this.tutorialManager.render(ctx);
         break;
+      case "map":
+        this.mapOverlay.render(ctx);
+        break;
+    }
+
+    // Quest tracker (only in explore mode, not during dialogue/menus)
+    if (this.mode === "explore" || this.mode === "npc_select") {
+      this.questTracker.render(ctx);
+    }
+
+    // Relationship panel (during dialogue)
+    if (this.mode === "dialogue") {
+      this.relationshipPanel.render(ctx);
+    }
+
+    if (this.mapOverlay.isVisible()) {
+      this.mapOverlay.render(ctx);
     }
 
     // Scene connection menu
     if (this.connectionMenuOpen) {
       this.renderConnectionMenu(ctx, state.sceneConnections);
     }
+
+    // Friendship change indicators (always visible, above everything)
+    this.friendshipIndicator.render(ctx);
 
     // Achievement notifications (always on top)
     this.achievementManager.render(ctx);
@@ -573,6 +1001,17 @@ export class ExplorationScene extends BaseScene {
         ctx.fillText(npcDef.name, placement.x + 24, height - 165);
         ctx.textAlign = "left";
       }
+
+      // [E] interaction prompt for nearest NPC
+      if (this.nearestNpc?.npcId === placement.npcId) {
+        ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
+        ctx.fillRect(placement.x + 4, height - 185, 40, 18);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("[E]", placement.x + 24, height - 173);
+        ctx.textAlign = "left";
+      }
     });
   }
 
@@ -589,9 +1028,14 @@ export class ExplorationScene extends BaseScene {
     ctx.font = "bold 16px Arial";
     ctx.fillText(state.sceneName, 16, 26);
 
-    // Player stats (right side)
+    // Gold display (top right)
     ctx.textAlign = "right";
-    ctx.font = "12px Arial";
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "bold 16px Arial";
+    ctx.fillText(`Gold: ${state.player.gold}`, width - 16, 26);
+
+    // Player stats (below gold)
+    ctx.font = "11px Arial";
     ctx.fillStyle = "#94a3b8";
     const stats = [
       `CON: ${state.player.confidence}`,
@@ -599,14 +1043,14 @@ export class ExplorationScene extends BaseScene {
       `STR: ${state.player.stress}`,
       `REP: ${state.player.reputation}`,
     ];
-    ctx.fillText(stats.join(" | "), width - 16, 26);
+    ctx.fillText(stats.join(" | "), width - 16, 40);
     ctx.textAlign = "left";
 
     // Controls hint
     if (this.mode === "explore") {
       ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
       ctx.font = "11px Arial";
-      ctx.fillText("[E] Talk to NPC  [N] Change Scene  [←→] Move", 16, ctx.canvas.height - 90);
+      ctx.fillText(t("explore_controls") + "  [Q] " + t("quest_tracker_title"), 16, ctx.canvas.height - 90);
     }
   }
 
@@ -630,7 +1074,7 @@ export class ExplorationScene extends BaseScene {
     // Title
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 16px Arial";
-    ctx.fillText("Talk to...", boxX + 16, boxY + 28);
+    ctx.fillText(t("explore_talk_to"), boxX + 16, boxY + 28);
 
     // NPC list
     ctx.font = "14px Arial";
@@ -647,7 +1091,7 @@ export class ExplorationScene extends BaseScene {
     // Hint
     ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
     ctx.font = "11px Arial";
-    ctx.fillText("[↑↓] Select  [Enter] Confirm  [Esc] Cancel", boxX + 16, boxY + boxHeight - 10);
+    ctx.fillText(t("explore_select_controls"), boxX + 16, boxY + boxHeight - 10);
   }
 
   private renderConnectionMenu(
@@ -669,7 +1113,7 @@ export class ExplorationScene extends BaseScene {
     // Title
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 14px Arial";
-    ctx.fillText("Go to:", boxX + 12, boxY + 22);
+    ctx.fillText(t("explore_go_to"), boxX + 12, boxY + 22);
 
     // Connections
     ctx.font = "13px Arial";
