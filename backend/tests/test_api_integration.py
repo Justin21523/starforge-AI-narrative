@@ -71,6 +71,29 @@ class TestGameAPI:
         data = response.json()
         assert isinstance(data, dict)
 
+    def test_travel(self):
+        """測試旅行 API。"""
+        from fastapi.testclient import TestClient
+        from app.main import app
+
+        client = TestClient(app)
+        
+        req = {
+            "playerId": "test_player_travel",
+            "destinationId": "classroom_5a"
+        }
+        
+        response = client.post("/game/travel", json=req)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["currentSceneId"] == "classroom_5a"
+        
+        # 驗證狀態已更新
+        state_res = client.get("/game/player/test_player_travel/state")
+        assert state_res.json()["sceneId"] == "classroom_5a"
+
 
 class TestConfigAPI:
     """設定 API 測試。"""
