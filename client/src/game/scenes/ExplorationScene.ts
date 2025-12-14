@@ -21,6 +21,7 @@ import { InventoryManager } from "../InventoryManager";
 import { ShopManager } from "../ShopManager";
 import { ShopUI } from "../../ui/ShopUI";
 import { MapOverlay } from "../../ui/MapOverlay";
+import { AiDebugPanel } from "../../ui/AiDebugPanel";
 import { t } from "../../i18n/i18n";
 import { getAutoSaveManager } from "../../save/AutoSaveManager";
 import { getGameStats } from "../../stats/GameStats";
@@ -43,6 +44,7 @@ export class ExplorationScene extends BaseScene {
   private friendshipIndicator: FriendshipIndicator;
   private relationshipPanel: RelationshipPanel;
   private ai: AiClient;
+  private aiDebugPanel: AiDebugPanel;
   private httpClient = new GameHttpClient("/game");
   private toast?: ToastManager;
   private config: AppConfig;
@@ -112,6 +114,14 @@ export class ExplorationScene extends BaseScene {
     this.ai = config.useMockAi
       ? new MockAiClient()
       : new HttpAiClient(config.apiBaseUrl);
+    
+    this.aiDebugPanel = new AiDebugPanel(inputManager, (newConfig) => {
+        this.config = newConfig;
+        this.ai = newConfig.useMockAi
+            ? new MockAiClient()
+            : new HttpAiClient(newConfig.apiBaseUrl);
+        this.toast?.add(`AI Mode: ${newConfig.useMockAi ? "Mock" : "Real"}`);
+    });
 
     // Initialize pause menu
     this.pauseMenu = new PauseMenu(
@@ -445,6 +455,17 @@ export class ExplorationScene extends BaseScene {
     if (this.mode === "explore" && this.input.consumePress("Escape")) {
       this.showPauseMenu();
       return;
+    }
+
+    // Toggle AI Debug Panel (F1)
+    if (this.input.consumePress("F1")) {
+      this.aiDebugPanel.toggle();
+    }
+    
+    if (this.aiDebugPanel.isVisible()) {
+      this.aiDebugPanel.update();
+      // Allow moving while debug panel is open, or block? 
+      // For now, allow input but panel takes precedence if keys conflict.
     }
 
     // Open map overlay
@@ -977,6 +998,10 @@ export class ExplorationScene extends BaseScene {
 
     // Achievement notifications (always on top)
     this.achievementManager.render(ctx);
+
+    if (this.aiDebugPanel.isVisible()) {
+      this.aiDebugPanel.render(ctx);
+    }
 
     ctx.restore();
   }
