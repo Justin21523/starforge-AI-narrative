@@ -9,9 +9,11 @@ from app.ai.orchestrator.plan_types import OrchestrationTrace
 from app.ai.orchestrator.planner import PlannerAgent
 from app.ai.orchestrator.tooling import ToolRegistry
 from app.ai.orchestrator.safety_agent import SafetyAgent
+from app.ai.orchestrator.memory_agent import MemoryAgent
 from app.ai.tools.game_state import GetGameStateTool
 from app.ai.tools.search_lore import SearchLoreTool
 from app.ai.tools.web_search import WebSearchTool
+from app.ai.tools.roll_check import RollCheckTool
 from app.ai.rag.vector_store import VectorStore
 from app.game.schemas import DialogueRequest, DialogueResponse
 from app.game.services.player_service import PlayerService
@@ -36,6 +38,7 @@ class DialogueAgent:
         self.player_service = player_service
         self.quest_service = quest_service
         self.safety_agent = safety_agent or SafetyAgent()
+        self.memory_agent = MemoryAgent()
         self.planner = PlannerAgent(llm_client)
         self.tools = ToolRegistry()
         
@@ -50,6 +53,7 @@ class DialogueAgent:
         self.tools.register(GetGameStateTool(player_service, quest_service))
         self.tools.register(SearchLoreTool(store))
         self.tools.register(WebSearchTool())
+        self.tools.register(RollCheckTool(player_service))
 
     async def handle(self, req: DialogueRequest) -> DialogueResponse:
         # 1. Safety Check (Input)
@@ -63,17 +67,21 @@ class DialogueAgent:
                     internalEffects=None
                 )
 
+        # 2. Plan and Execute Tools
+        # Pass Planner explicit tool registry so it knows about RollCheck
+        self.planner.tool_registry = self.tools 
         plan_steps = await self.planner.plan_for_dialogue(req)
         plan_results = await self.tools.execute_plan(plan_steps)
         trace = OrchestrationTrace(steps=plan_steps, results=plan_results)
 
+        # 3. Generate Response
         prompt = self._build_prompt(req, trace)
         raw_dict = await self.llm_client.complete(prompt) # Returns dict now based on Mock client
         
-        # 2. Parse Response
+        # 4. Parse Response
         response = self._parse_response(raw_dict)
 
-        # 3. Safety Check (Output)
+        # 5. Safety Check (Output)
         response = self.safety_agent.check_output(response)
 
         # 將效果寫回狀態（使用 mock / 記憶體實作，不觸發外部資源）
@@ -95,7 +103,9 @@ class DialogueAgent:
 
     def _build_prompt(self, req: DialogueRequest, trace: OrchestrationTrace) -> str:
         """將遊戲上下文與工具結果組合成提示，保留 trace 方便 LLM 對齊推理。"""
-        history_snippets = "\n".join(f"{h.speaker}: {h.text}" for h in req.history[-6:])
+        # Use MemoryAgent to summarize history
+        history_summary = self.memory_agent.summarize_history(req.history)
+        
         stats = (
             f"player stats: {req.player_stats.model_dump(by_alias=True)} | "
             f"npc stats: {req.npc_stats.model_dump(by_alias=True)}"
@@ -110,7 +120,8 @@ class DialogueAgent:
             for res in trace.results
         )
         return (
-            f"[scene={req.scene_id}] [{quest}] [{stats}] history:\n{history_snippets}\n"
+            f"[scene={req.scene_id}] [{quest}] [{stats}]\n"
+            f"history:\n{history_summary}\n"
             f"tool results:\n{tools_summary}\n"
             "Respond as the NPC with safe, age-appropriate dialogue, cite safety if bullying, and include 2-3 choices."
         )
