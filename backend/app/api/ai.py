@@ -10,12 +10,15 @@ from app.api import deps
 from app.core.config import get_settings, Settings
 from app.game.schemas import DialogueRequest, DialogueResponse
 
+from app.ai.rag.vector_store import VectorStore
+
 router = APIRouter()
 
 
 def get_dialogue_agent(
     settings: Settings = Depends(get_settings),
     safety_agent: SafetyAgent = Depends(deps.get_safety_agent),
+    vector_store: VectorStore = Depends(deps.get_vector_store_instance),
 ) -> DialogueAgent:
     """
     建立 DialogueAgent 實例。
@@ -31,6 +34,7 @@ def get_dialogue_agent(
         player_service=deps.get_player_service(),
         quest_service=deps.get_quest_service(),
         safety_agent=safety_agent,
+        vector_store=vector_store,
     )
 
 

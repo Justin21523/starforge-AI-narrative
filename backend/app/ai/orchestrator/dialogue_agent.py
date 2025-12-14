@@ -30,6 +30,7 @@ class DialogueAgent:
         player_service: PlayerService,
         quest_service: QuestService,
         safety_agent: SafetyAgent | None = None,
+        vector_store: VectorStore | None = None,
     ) -> None:
         self.llm_client = llm_client
         self.player_service = player_service
@@ -37,8 +38,10 @@ class DialogueAgent:
         self.safety_agent = safety_agent or SafetyAgent()
         self.planner = PlannerAgent(llm_client)
         self.tools = ToolRegistry()
-        store = VectorStore()
-        # 預載基本安全提示，避免無資料時空回應
+        
+        # Use provided store or fallback (new empty store)
+        store = vector_store or VectorStore()
+        # Ensure default safety prompt exists
         store.add(
             "base-safety",
             "If bullying happens, seek help from teachers or trusted adults.",

@@ -111,13 +111,12 @@ def player_state(player_id: str, player_service=Depends(deps.get_player_service)
 
 
 @router.get("/lore/search")
-async def lore_search(q: str):
+async def lore_search(
+    q: str,
+    vector_store: VectorStore = Depends(deps.get_vector_store_instance)
+):
     """搜尋傳說/背景資料。"""
-    # 使用與 DialogueAgent 相同的 in-memory VectorStore (new instance each call for simplicity)
-    store = VectorStore()
-    store.add("base-lore", "School encourages seeking help from teachers when bullied.", ["safety", "school"])
-    store.add("base-friendship", "Building friendship requires empathy and honest communication.", ["friendship"])
-    tool = SearchLoreTool(store)
+    tool = SearchLoreTool(vector_store)
     result = await tool.run({"terms": [q]})
     return result
 
