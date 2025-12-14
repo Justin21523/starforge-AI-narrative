@@ -4,7 +4,7 @@ FastAPI 入口，統一掛載遊戲與 AI 路由。
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from app.api import ai, game, config, reset
+from app.api import ai, game, config, reset, assets
 from app.api import deps
 from app.game.services.lore_ingestion_service import LoreIngestionService
 
@@ -23,6 +23,7 @@ app = FastAPI(title="Starforge AI Narrative", version="0.1.0", lifespan=lifespan
 
 app.include_router(ai.router, prefix="/ai", tags=["ai"])
 app.include_router(game.router, prefix="/game", tags=["game"])
+app.include_router(assets.router, prefix="/assets", tags=["assets"])
 app.include_router(config.router, tags=["config"])
 app.include_router(reset.router, tags=["reset"])
 

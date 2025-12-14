@@ -24,13 +24,38 @@ export class AiDebugPanel {
   update() {
     if (!this.visible) return;
 
-    // Toggle Mock AI with 'M' key when panel is open
+    // Toggle Mock AI with 'T' key
     if (this.input.consumePress("KeyT")) {
       const current = appStore.getState().config.useMockAi;
       const next = !current;
       appStore.setConfig({ useMockAi: next });
       this.onConfigChange(appStore.getState().config);
     }
+
+    // Generate Asset with 'G' key
+    if (this.input.consumePress("KeyG")) {
+        this.testAssetGeneration();
+    }
+  }
+
+  private async testAssetGeneration() {
+      try {
+          const res = await fetch("/assets/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ prompt: "Test Item " + Date.now(), asset_type: "item" })
+          });
+          const data = await res.json();
+          console.log("Generated Asset:", data);
+          // For now just log it, or we could add it to a list to display
+          appStore.setLastAiResponse({ 
+              npcText: `Asset Generated: ${data.url}`, 
+              suggestedPlayerChoices: [], 
+              meta: { prompt: "Gen Asset", trace: data } 
+          } as any);
+      } catch (e) {
+          console.error("Asset Gen Failed", e);
+      }
   }
 
   render(ctx: CanvasRenderingContext2D) {
@@ -65,10 +90,11 @@ export class AiDebugPanel {
     ctx.fillStyle = "#e2e8f0";
     ctx.font = "14px monospace";
     ctx.fillText(`[T] Use Mock AI: ${config.useMockAi}`, panelX + 20, 60);
+    ctx.fillText(`[G] Gen Asset (Test)`, panelX + 20, 80);
 
     // Logs
     const logs = appStore.getState().promptLog;
-    let y = 100;
+    let y = 120;
 
     ctx.fillStyle = "#94a3b8";
     ctx.fillText("Latest Interaction:", panelX + 20, y);
