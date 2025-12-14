@@ -81,4 +81,24 @@ export class GameHttpClient {
     if (!res.ok) throw new Error("Failed to travel");
     return res.json();
   }
+
+  async saveGame(
+    playerId: string,
+    slotId: string,
+    data: { x: number; gold: number; inventory: string[] }
+  ): Promise<{ success: boolean; snapshot?: any; message?: string }> {
+    const res = await fetch(`${this.baseUrl}/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId, slotId, ...data }),
+    });
+    if (!res.ok) throw new Error("Failed to save game");
+    return res.json();
+  }
+
+  async loadGame(playerId: string, slotId: string): Promise<{ success: boolean; snapshot?: any; message?: string }> {
+    const res = await fetch(`${this.baseUrl}/load/${playerId}/${slotId}`);
+    if (!res.ok) throw new Error("Failed to load game");
+    return res.json();
+  }
 }

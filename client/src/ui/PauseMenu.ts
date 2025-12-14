@@ -12,6 +12,7 @@ interface PauseMenuCallbacks {
   onResume: () => void;
   onMainMenu: () => void;
   onAction?: (action: string) => void;
+  onLoad?: (snapshot: any) => void;
 }
 
 /**
@@ -54,11 +55,9 @@ export class PauseMenu {
     this.input = inputManager;
     this.callbacks = callbacks;
     this.toast = toastManager;
-    this.saveManager = new SaveManager("player-001");
+    // this.saveManager = new SaveManager("player-001"); // Deprecated
     this.saveLoadMenu = new SaveLoadMenu(
       inputManager,
-      "player-001",
-      { onClose: () => {} },
       toastManager
     );
     this.settingsPanel = new SettingsPanel(
@@ -81,64 +80,9 @@ export class PauseMenu {
   hide(): void {
     this.visible = false;
     this.confirmDialog = null;
+    this.saveLoadMenu.close();
   }
-
-  isVisible(): boolean {
-    return this.visible;
-  }
-
-  update(): void {
-    if (!this.visible) return;
-
-    // Handle SaveLoadMenu
-    if (this.saveLoadMenu.isVisible()) {
-      this.saveLoadMenu.update();
-      return;
-    }
-
-    // Handle SettingsPanel
-    if (this.settingsPanel.isVisible()) {
-      this.settingsPanel.update();
-      return;
-    }
-
-    // Handle confirmation dialog
-    if (this.confirmDialog?.visible) {
-      this.handleConfirmInput();
-      return;
-    }
-
-    // Navigate menu
-    if (this.input.consumePress("ArrowUp")) {
-      this.selectedIndex =
-        (this.selectedIndex - 1 + this.getMenuOptions().length) % this.getMenuOptions().length;
-    }
-    if (this.input.consumePress("ArrowDown")) {
-      this.selectedIndex = (this.selectedIndex + 1) % this.getMenuOptions().length;
-    }
-
-    // Select option
-    if (this.input.consumePress("Enter")) {
-      this.selectOption();
-    }
-
-    // Close menu with Escape
-    if (this.input.consumePress("Escape")) {
-      this.hide();
-      this.callbacks.onResume();
-    }
-  }
-
-  private handleConfirmInput(): void {
-    if (this.input.consumePress("Enter") || this.input.consumePress("KeyY")) {
-      this.confirmDialog?.onConfirm();
-      this.confirmDialog = null;
-    }
-    if (this.input.consumePress("Escape") || this.input.consumePress("KeyN")) {
-      this.confirmDialog = null;
-    }
-  }
-
+// ...
   private selectOption(): void {
     const option = this.getMenuOptions()[this.selectedIndex];
 
@@ -149,11 +93,17 @@ export class PauseMenu {
         break;
 
       case "save":
-        this.saveLoadMenu.show("save");
+        this.saveLoadMenu.open("save", () => {
+             // On Close, do nothing, just return control to PauseMenu
+        });
         break;
 
       case "load":
-        this.saveLoadMenu.show("load");
+        this.saveLoadMenu.open("load", () => {
+             // On Close
+        }, (snapshot) => {
+             this.restoreSnapshot(snapshot);
+        });
         break;
 
       case "settings":
@@ -166,83 +116,79 @@ export class PauseMenu {
     }
   }
 
-  private saveGame(): void {
-    const state = appStore.getState().game;
-    const success = this.saveManager.save({
-      sceneId: state.sceneId,
-      sceneName: state.sceneName,
-      player: {
-        x: state.player.x,
-        confidence: state.player.confidence,
-        empathy: state.player.empathy,
-        stress: state.player.stress,
-        reputation: state.player.reputation,
-      },
-      npc: {
-        id: state.npc.id,
-        name: state.npc.name,
-        friendship: state.npc.friendship,
-        trust: state.npc.trust,
-      },
-      questStates: state.questStates,
-    });
-
-    if (success) {
-      this.toast?.add("Game saved!");
-    } else {
-      this.toast?.add("Failed to save game");
-    }
-  }
-
-  private showLoadConfirm(): void {
-    if (!this.saveManager.hasSave()) {
-      this.toast?.add("No save file found");
-      return;
-    }
-
-    this.confirmDialog = {
-      visible: true,
-      message: "Load saved game? Current progress will be lost.",
-      onConfirm: () => this.loadGame(),
-    };
-  }
-
-  private loadGame(): void {
-    const saveData = this.saveManager.load();
-    if (saveData) {
-      const gs = saveData.gameState;
-      appStore.setScene(gs.sceneId, gs.sceneName, []);
+  private restoreSnapshot(snapshot: any): void {
+      if (!snapshot) return;
+      
+      // 1. Scene
+      // We might need to fetch scene def to get name/connections, 
+      // but for now set ID and let SceneManager/ExplorationScene handle loading logic if possible.
+      // appStore.setScene triggers subscribers.
+      appStore.setScene(snapshot.sceneId, "Loading...", []); 
+      
+      // 2. Player Stats
+      // snapshot.playerStats has x, gold, etc.
       appStore.updatePlayerStats({
-        x: gs.player.x,
-        confidence: gs.player.confidence,
-        empathy: gs.player.empathy,
-        stress: gs.player.stress,
-        reputation: gs.player.reputation,
+          confidence: snapshot.playerStats.confidence,
+          empathy: snapshot.playerStats.empathy,
+          stress: snapshot.playerStats.stress,
+          reputation: snapshot.playerStats.reputation,
+          gold: snapshot.playerStats.gold,
+          x: snapshot.playerStats.x
       });
-      appStore.updateNpcStats({
-        id: gs.npc.id,
-        name: gs.npc.name,
-        friendship: gs.npc.friendship,
-        trust: gs.npc.trust,
-      });
-      appStore.setQuestStates(gs.questStates);
-      this.toast?.add("Game loaded!");
+      
+      // 3. NPC States
+      // snapshot.npcStates is dict { npcId: stats }
+      // appStore has array of NPCs? No, appStore.game.npc is single current NPC? 
+      // appStore.game.npc is for "current interaction".
+      // Global NPC states are stored where?
+      // In `client/src/state/store.ts`: `npcs: NpcDef[]` is static data.
+      // `game.npc` is ONLY current active NPC.
+      // The client doesn't seem to persist ALL NPC states in `game` slice?
+      // `ExplorationScene.ts`: `getNpcsForScene` uses `state.sceneId`.
+      // `appStore.updateNpcStats` updates `game.npc`.
+      
+      // If client doesn't track all NPCs locally, then we rely on Server.
+      // But `ExplorationScene` renders NPCs.
+      // `ExplorationScene` calls `appStore.getState().npcs` (static data).
+      // If we want dynamic friendship to show up, `GameHttpClient` fetches `fetchPlayerState`
+      // which returns `npcStates`. 
+      // We should probably update `ExplorationScene` to fetch/refresh state after load.
+      // Or `appStore` should have `npcStates` map.
+      // Currently `appStore.game.npc` is limited.
+      
+      // 4. Quests
+      appStore.setQuestStates(snapshot.questStates);
+      
       this.hide();
       this.callbacks.onResume();
-    } else {
-      this.toast?.add("Failed to load game");
-    }
-  }
-
-  private showMainMenuConfirm(): void {
-    this.confirmDialog = {
-      visible: true,
-      message: "Return to main menu? Unsaved progress will be lost.",
-      onConfirm: () => {
-        this.hide();
-        this.callbacks.onMainMenu();
-      },
-    };
+      // Force reload scene logic might be needed in Game.ts or ExplorationScene
+      // Usually changing sceneId in store should trigger reaction if listeners are set up,
+      // OR we explicit call `sceneManager.setScene`.
+      // The `ExplorationScene` watches store? No, `Game.ts` or `SceneManager` logic?
+      // `ExplorationScene.navigateToScene` manually sets scene.
+      
+      // We need a way to trigger scene load from here.
+      // But `PauseMenu` is UI.
+      // We can add `onLoad` callback to `PauseMenuCallbacks`?
+      // Or just reload the page? (Cheating)
+      // Better: The `restoreSnapshot` updates store.
+      // AND we need to tell the game to switch scene.
+      // `appStore.setScene` updates data, but doesn't drive `SceneManager`.
+      
+      // Let's defer actual scene switch to the callback `onAction` or similar if needed,
+      // or assume `Game.ts` monitors `sceneId`.
+      // But `Game.ts` loop just calls `sceneManager.update`.
+      
+      // We will assume `ExplorationScene` or the context using `PauseMenu` can handle this.
+      // `ExplorationScene` has `navigateToScene`.
+      // But `PauseMenu` is inside `ExplorationScene`.
+      // So `PauseMenu` can call `this.callbacks.onLoad(snapshot)`.
+      
+      if (this.callbacks["onLoad"]) {
+          this.callbacks["onLoad"](snapshot);
+      } else {
+          window.location.reload(); // Fallback if no handler
+      }
   }
 
   render(ctx: CanvasRenderingContext2D): void {

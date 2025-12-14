@@ -120,6 +120,7 @@ export class ExplorationScene extends BaseScene {
         onResume: () => this.resumeFromPause(),
         onMainMenu: () => this.returnToMainMenu(),
         onAction: (action: string) => this.handleSettingsAction(action),
+        onLoad: (snapshot: any) => this.handleLoadGame(snapshot),
       },
       toastManager
     );
@@ -509,6 +510,31 @@ export class ExplorationScene extends BaseScene {
       this.mode = "tutorial";
       this.tutorialManager.start();
       this.toast?.add(t("tutorial_restarted"));
+    }
+  }
+
+  private handleLoadGame(snapshot: any): void {
+    const targetSceneId = snapshot.sceneId;
+    const scene = loadScene(targetSceneId);
+    
+    if (scene) {
+        // Ensure store has correct scene data (PauseMenu might have set placeholder)
+        appStore.setScene(scene.id, scene.name, scene.connections);
+        
+        // Reset scene entities
+        this.npcsInScene = getNpcsForScene(targetSceneId).map((p) => ({ ...p }));
+        this.setupNpcPatrol(targetSceneId);
+        this.buildingManager.loadEntrances(targetSceneId);
+        
+        // Reset UI state
+        this.connectionMenuOpen = false;
+        this.mode = "explore";
+        this.updateQuestTracker();
+        
+        this.toast?.add(`Loaded: ${scene.name}`);
+    } else {
+        console.error(`Scene ${targetSceneId} not found`);
+        this.toast?.add(`Error loading scene ${targetSceneId}`);
     }
   }
 
