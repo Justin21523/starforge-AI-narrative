@@ -19,6 +19,9 @@ class PlayerStats(BaseCamelModel):
     empathy: int = 0
     stress: int = 0
     reputation: int = 0
+    gold: int = 0
+    x: int = 0
+    inventory: List[str] = Field(default_factory=list)
 
 
 class NpcStats(BaseCamelModel):
@@ -86,3 +89,27 @@ class TravelResponse(BaseCamelModel):
     success: bool
     current_scene_id: str = Field(..., alias="currentSceneId")
     scene_data: Optional[dict] = Field(None, alias="sceneData")
+
+
+class SaveGameRequest(BaseCamelModel):
+    player_id: str = Field(..., alias="playerId")
+    slot_id: str = Field("auto", alias="slotId")
+    # Client-authoritative data to sync before saving
+    x: int = 0
+    gold: int = 0
+    inventory: List[str] = Field(default_factory=list)
+
+
+class GameStateSnapshot(BaseCamelModel):
+    player_id: str = Field(..., alias="playerId")
+    scene_id: str = Field(..., alias="sceneId")
+    player_stats: PlayerStats = Field(..., alias="playerStats")
+    npc_states: dict[str, NpcStats] = Field(..., alias="npcStates")
+    quest_states: dict[str, str] = Field(..., alias="questStates")
+    timestamp: float = 0
+
+
+class LoadGameResponse(BaseCamelModel):
+    success: bool
+    snapshot: Optional[GameStateSnapshot] = None
+    message: Optional[str] = None

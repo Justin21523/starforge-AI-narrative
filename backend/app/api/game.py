@@ -7,7 +7,15 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 from app.api import deps
-from app.game.schemas import DialogueRequest, DialogueResponse, QuestUpdate, TravelRequest, TravelResponse
+from app.game.schemas import (
+    DialogueRequest,
+    DialogueResponse,
+    QuestUpdate,
+    TravelRequest,
+    TravelResponse,
+    SaveGameRequest,
+    LoadGameResponse,
+)
 from app.game.services.player_service import PlayerService
 from app.ai.rag.vector_store import VectorStore
 from app.ai.tools.search_lore import SearchLoreTool
@@ -18,6 +26,35 @@ router = APIRouter()
 def _read_json(path: Path):
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@router.post("/save")
+def save_game(
+    req: SaveGameRequest,
+    player_service=Depends(deps.get_player_service),
+    quest_service=Depends(deps.get_quest_service),
+    save_service=Depends(deps.get_save_service),
+) -> LoadGameResponse:
+    try:
+        snapshot = save_service.save_game(req, player_service, quest_service)
+        return LoadGameResponse(success=True, snapshot=snapshot)
+    except Exception as e:
+        return LoadGameResponse(success=False, message=str(e))
+
+
+@router.get("/load/{player_id}/{slot_id}")
+def load_game(
+    player_id: str,
+    slot_id: str,
+    player_service=Depends(deps.get_player_service),
+    quest_service=Depends(deps.get_quest_service),
+    save_service=Depends(deps.get_save_service),
+) -> LoadGameResponse:
+    try:
+        snapshot = save_service.load_game(player_id, slot_id, player_service, quest_service)
+        return LoadGameResponse(success=True, snapshot=snapshot)
+    except Exception as e:
+        return LoadGameResponse(success=False, message=str(e))
 
 
 @router.post("/travel")
