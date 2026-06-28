@@ -29,3 +29,11 @@ export interface QuestDef {
   type: "main" | "side";
   steps: QuestStep[];
 }
+
+export interface BuildingDef {
+  id: string;
+  name: string;
+  x: number;
+  width: number;
+  targetSceneId: string;
+}
